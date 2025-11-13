@@ -3,67 +3,55 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Spotify</title>
+  <title>Spotify Clone</title>
   <link rel="stylesheet" href="UI.css" />
   <link rel="icon" href="assets/favicon.png" type="image/png">
 </head>
 <body>
-    <div class="leftbar">
-        <h1> <img src="assets/spotlogo.png" alt="spotlogo" style="width:100px;height:100px;" style="text-align: center;"><p>Spotify </p></h1>
-<ul>
-    <li> Home Page </li>
-    <br>
-    <li> Playlists </li>
-    <br>
-</ul>
-
-<button id="openmenubtn">Upload</button>
-
-</div>
-
-<div id="uploadpopup" class="hidden">
-  <div class="upload">
-     <h3> Upload your song</h3>
+  <div class="leftbar">
+    <h1>
+      <img src="assets/spotlogo.png" alt="spotlogo" style="width:100px;height:100px;">
+      <p>Spotify</p>
+    </h1>
     <ul>
-      <li>
-        Name: <input id="songNameInput" type="text" placeholder="Type song name">
-      </li>
-      <li>
-        Upload: <input id="songFileInput" type="file" accept=".mp3">
-      </li>
+      <li>Home Page</li><br>
+      <li>Playlists</li><br>
     </ul>
-    <button id="addSongBtn">Add Song</button>
-    <button id="closemenubtn">Close</button>
+    <button id="openmenubtn">Upload</button>
   </div>
-</div>
 
+  <!-- Upload Popup -->
+  <div id="uploadpopup" class="hidden">
+    <div class="upload">
+      <h3>Upload your song</h3>
+      <ul>
+        <li>Name: <input id="songNameInput" type="text" placeholder="Type song name"></li>
+        <li>Upload: <input id="songFileInput" type="file" accept=".mp3"></li>
+        <li>Photo: <input id="songImageInput" type="file" accept="image/*"></li>
+      </ul>
+      <button id="addSongBtn">Add Song</button>
+      <button id="closemenubtn">Close</button>
+    </div>
+  </div>
+
+  <!-- Main Player -->
   <div class="main">
-    <div class="song-list">
-<div class="song" data-songs="songs/song1.mp3" data-images="albums/song1.jpg">Wiz Khalifa - Black and yellow</div>
-<div class="song" data-songs="songs/song2.mp3" data-images="albums/song2.png">Kendrick Lamar - Not like us</div>
-<div class="song" data-songs="songs/song3.mp3" data-images="albums/song3.jpg">
-Kendrick Lamar - Swimming Pools (Drank)</div>
-<div class="song" data-songs="songs/song4.mp3" data-images="albums/song4.jpg">J.cole -
-No Role Modelz</div>
-<div class="song" data-songs="songs/song5.mp3" data-images="albums/song5.jpg">50 Cent - In Da Club</div>
-<div class="song" data-songs="songs/song6.mp3" data-images="albums/song6.jpg">Chief Keef - Love Sosa</div>
-<div class="song" data-songs="songs/song7.mp3" data-images="albums/song7.jpg">Fetty Wap - Trap Queen</div>
-<div class="song" data-songs="songs/song8.mp3" data-images="albums/song8.jpg">A$AP Rocky - Fuckin Problems</div>
-<div class="song" data-songs="songs/song9.mp3" data-images="albums/song9.jpg">JAY-Z & Kanye West - Ni**as in paris</div>    
-
-</div>
+    <div class="song-list"></div>
 
     <div class="user">
-        <img src="album.jpg" alt="User Photo" class="user-photo" />
-        <h2 id="title">Choose a Song</h2>
-        <audio id="audio" controls></audio>
-        <div class="buttons">
-                    <button id="prev">⏮</button>
+      <img src="album.jpg" alt="Album Art" class="user-photo" />
+      <h2 id="title">Choose a Song</h2>
+      <audio id="audio" controls></audio>
+      <div class="buttons">
+        <button id="loop">🔁</button>
+        <button id="prev">⏮</button>
         <button id="play">▶</button>
         <button id="next">⏭</button>
-        </div>
+        <button id="shuffle">🔀</button>
+      </div>
     </div>
-    </div>
-    </body>
-      <script src="script.js"></script>
-      </html>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
