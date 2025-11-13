@@ -69,3 +69,7 @@ body {
   color: #1db954;
 }
 
+.hidden {
+  display: none !important;
+}
+
