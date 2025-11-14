@@ -3,36 +3,45 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Spotify Clone</title>
+  <title>NotSpotify</title>
   <link rel="stylesheet" href="UI.css" />
   <link rel="icon" href="assets/favicon.png" type="image/png">
 </head>
 <body>
-  <div class="leftbar">
-    <h1>
-      <img src="assets/spotlogo.png" alt="spotlogo" style="width:100px;height:100px;">
-      <p>Spotify</p>
-    </h1>
-    <ul>
-      <li>Home Page</li><br>
-      <li>Playlists</li><br>
-    </ul>
-    <button id="openmenubtn">Upload</button>
-  </div>
+<div class="leftbar">
+  <h1>
+    <img src="assets/spotlogo.png" alt="spotlogo" style="width:100px;height:100px;">
+    <p>Spotify</p>
+  </h1>
+  <ul>
+  </ul>
 
-  <!-- Upload Popup -->
-  <div id="uploadpopup" class="hidden">
-    <div class="upload">
-      <h3>Upload your song</h3>
-      <ul>
-        <li>Name: <input id="songNameInput" type="text" placeholder="Type song name"></li>
-        <li>Upload: <input id="songFileInput" type="file" accept=".mp3"></li>
-        <li>Photo: <input id="songImageInput" type="file" accept="image/*"></li>
-      </ul>
-      <button id="addSongBtn">Add Song</button>
-      <button id="closemenubtn">Close</button>
-    </div>
+  <!-- Playlist sidebar -->
+  <div class="playlist-list" id="playlistList"></div>
+  <button id="newPlaylistBtn">+ New Playlist</button>
+
+  <button id="openmenubtn" style="margin-top: 12px;">Upload</button>
+</div>
+
+<!-- Upload Popup -->
+<div id="uploadpopup" class="hidden">
+  <div class="upload">
+    <h3>Upload your song</h3>
+    <ul>
+      <li>Name: <input id="songNameInput" type="text" placeholder="Type song name"></li>
+      <li>Upload: <input id="songFileInput" type="file" accept="audio/*"></li>
+      <li>Photo: <input id="songImageInput" type="file" accept="image/*"></li>
+      <li>Playlist:
+        <select id="playlistSelect"></select>
+      </li>
+    </ul>
+    <button id="addSongBtn">Add Song</button>
+    <button id="closemenubtn">Close</button>
   </div>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast"></div>
 
   <!-- Main Player -->
   <div class="main">
