@@ -1,5 +1,4 @@
 window.addEventListener('DOMContentLoaded', () => {
-  // Elements
   const audio = document.getElementById('audio');
   const songTitle = document.getElementById('title');
   const albumArt = document.querySelector('.user-photo');
@@ -13,34 +12,22 @@ window.addEventListener('DOMContentLoaded', () => {
   const openmenubtn = document.getElementById('openmenubtn');
   const addSongBtn = document.getElementById('addSongBtn');
   const songList = document.querySelector('.song-list');
-
   const playlistList = document.getElementById('playlistList');
   const newPlaylistBtn = document.getElementById('newPlaylistBtn');
   const playlistSelect = document.getElementById('playlistSelect');
   const toastEl = document.getElementById('toast');
 
-  // State
-  let db;
-  let songs = []; // current playlist's songs [{ id, name, audioURL, imageURL, playlistId }]
-  let currentIndex = -1;
-  let isLooping = false;
-  let isShuffling = false;
-  let playlists = []; // [{ id, name }]
-  let currentPlaylistId = null;
+  let db, songs = [], currentIndex = -1, isLooping = false, isShuffling = false, playlists = [], currentPlaylistId = null;
 
-  // IndexedDB setup
   const request = indexedDB.open("SpotifyCloneDB", 2);
   request.onupgradeneeded = (e) => {
     db = e.target.result;
-    // v1 had songs only; v2 adds playlists and a playlistId on songs
     if (!db.objectStoreNames.contains("songs")) {
       db.createObjectStore("songs", { keyPath: "id", autoIncrement: true });
     }
     if (!db.objectStoreNames.contains("playlists")) {
-      const ps = db.createObjectStore("playlists", { keyPath: "id", autoIncrement: true });
-      ps.createIndex("name_idx", "name", { unique: false });
+      db.createObjectStore("playlists", { keyPath: "id", autoIncrement: true }).createIndex("name_idx", "name", { unique: false });
     }
-    // Add index on songs for playlistId if upgrading from older version
     const songsStore = e.currentTarget.transaction.objectStore("songs");
     if (!songsStore.indexNames.contains("playlist_idx")) {
       songsStore.createIndex("playlist_idx", "playlistId", { unique: false });
@@ -51,29 +38,21 @@ window.addEventListener('DOMContentLoaded', () => {
     await ensureDefaultPlaylists();
     await preloadDemosIfEmpty();
     await loadPlaylists();
-    // Set current playlist to first available
-    if (!currentPlaylistId && playlists.length > 0) {
-      currentPlaylistId = playlists[0].id;
-    }
+    if (!currentPlaylistId && playlists.length) currentPlaylistId = playlists[0].id;
     await renderPlaylists();
     await loadSongsForCurrentPlaylist();
     populatePlaylistSelect();
   };
-  request.onerror = (e) => {
-    console.error("IndexedDB error:", e);
-    showToast("Storage failed. Changes won't persist.");
-  };
+  request.onerror = (e) => showToast("Storage failed. Changes won't persist.");
 
-  // Toast feedback
-  function showToast(msg) {
+  const showToast = (msg) => {
     if (!toastEl) return;
     toastEl.textContent = msg;
     toastEl.classList.add('show');
     setTimeout(() => toastEl.classList.remove('show'), 1800);
-  }
+  };
 
-  // Playback
-  function playSong(index) {
+  const playSong = (index) => {
     const song = songs[index];
     if (!song) return;
     audio.src = song.audioURL;
@@ -81,62 +60,41 @@ window.addEventListener('DOMContentLoaded', () => {
     songTitle.textContent = song.name;
     audio.play();
     currentIndex = index;
-  }
+  };
 
-  // Render one song row
   function renderSong(songObj) {
     const row = document.createElement('div');
-    row.classList.add('song');
-
+    row.className = 'song';
+    
     const nameSpan = document.createElement('span');
-    nameSpan.classList.add('song-name');
+    nameSpan.className = 'song-name';
     nameSpan.textContent = songObj.name;
-
-    // right-side actions
-    const actions = document.createElement('div');
 
     const deleteBtn = document.createElement('button');
     deleteBtn.textContent = "❌";
-    deleteBtn.classList.add('delete-btn');
+    deleteBtn.className = 'delete-btn';
     deleteBtn.title = "Delete song";
-    deleteBtn.addEventListener('click', (e) => {
+    deleteBtn.onclick = (e) => {
       e.stopPropagation();
-      const ok = confirm(`Delete "${songObj.name}" from this playlist?`);
-      if (!ok) return;
-      deleteSong(songObj.id);
-    });
+      if (confirm(`Delete "${songObj.name}" from this playlist?`)) deleteSong(songObj.id);
+    };
 
-    actions.appendChild(deleteBtn);
-
-    row.appendChild(nameSpan);
-    row.appendChild(actions);
-
-    row.addEventListener('click', () => {
-      const idx = songs.findIndex(s => s.id === songObj.id);
-      playSong(idx);
-    });
-
+    row.append(nameSpan, deleteBtn);
+    row.onclick = () => playSong(songs.findIndex(s => s.id === songObj.id));
     songList.appendChild(row);
   }
 
-  // Save new song (blob) to DB into specific playlist
   function saveSong(name, audioBlob, imageBlob, playlistId) {
-    if (!db) {
-      alert("Storage not ready yet. Please wait a moment and try again.");
-      return;
-    }
+    if (!db) return alert("Storage not ready yet. Please wait a moment and try again.");
     const tx = db.transaction("songs", "readwrite");
-    const store = tx.objectStore("songs");
-    store.add({ name, audioBlob, imageBlob, playlistId });
+    tx.objectStore("songs").add({ name, audioBlob, imageBlob, playlistId });
     tx.oncomplete = async () => {
       showToast("Song added");
       await loadSongsForPlaylist(playlistId);
       if (playlistId === currentPlaylistId) rebuildSongUI();
     };
-    tx.onerror = (e) => console.error("Save error:", e);
   }
 
-  // Load songs for the current playlist into state
   async function loadSongsForCurrentPlaylist() {
     if (!currentPlaylistId) {
       songs = [];
@@ -147,109 +105,78 @@ window.addEventListener('DOMContentLoaded', () => {
     rebuildSongUI();
   }
 
-  // Query songs by playlist
   async function loadSongsForPlaylist(playlistId) {
     songs = [];
     if (!db) return;
-    const tx = db.transaction("songs", "readonly");
-    const store = tx.objectStore("songs");
-    const index = store.index("playlist_idx");
     return new Promise((resolve) => {
       songList.innerHTML = "";
-      const request = index.openCursor(IDBKeyRange.only(playlistId));
-      request.onsuccess = (e) => {
+      const req = db.transaction("songs", "readonly").objectStore("songs").index("playlist_idx").openCursor(IDBKeyRange.only(playlistId));
+      req.onsuccess = (e) => {
         const cursor = e.target.result;
         if (cursor) {
           const { id, name, audioBlob, imageBlob, playlistId: pid } = cursor.value;
-          const audioURL = URL.createObjectURL(audioBlob);
-          const imageURL = imageBlob ? URL.createObjectURL(imageBlob) : null;
-          const songObj = { id, name, audioURL, imageURL, playlistId: pid };
-          songs.push(songObj);
+          songs.push({ id, name, audioURL: URL.createObjectURL(audioBlob), imageURL: imageBlob ? URL.createObjectURL(imageBlob) : null, playlistId: pid });
           cursor.continue();
-        } else {
-          resolve();
-        }
+        } else resolve();
       };
-      request.onerror = () => resolve();
+      req.onerror = () => resolve();
     });
   }
 
   function rebuildSongUI() {
     songList.innerHTML = "";
-    if (songs.length === 0) {
+    if (!songs.length) {
       const empty = document.createElement('div');
       empty.className = 'song';
       empty.textContent = "No songs in this playlist yet.";
       songList.appendChild(empty);
-      return;
-    }
-    songs.forEach(renderSong);
+    } else songs.forEach(renderSong);
   }
 
-  // Delete song
   function deleteSong(id) {
     if (!db) return;
     const tx = db.transaction("songs", "readwrite");
-    const store = tx.objectStore("songs");
-    store.delete(id);
+    tx.objectStore("songs").delete(id);
     tx.oncomplete = async () => {
       showToast("Song deleted");
       await loadSongsForCurrentPlaylist();
     };
-    tx.onerror = (e) => console.error("Delete error:", e);
   }
 
-  // Playlists: CRUD and rendering
   async function loadPlaylists() {
     playlists = [];
     if (!db) return;
-    const tx = db.transaction("playlists", "readonly");
-    const store = tx.objectStore("playlists");
     return new Promise((resolve) => {
-      store.openCursor().onsuccess = (e) => {
+      db.transaction("playlists", "readonly").objectStore("playlists").openCursor().onsuccess = (e) => {
         const cursor = e.target.result;
         if (cursor) {
-          const { id, name } = cursor.value;
-          playlists.push({ id, name });
+          playlists.push({ id: cursor.value.id, name: cursor.value.name });
           cursor.continue();
-        } else {
-          resolve();
-        }
+        } else resolve();
       };
     });
   }
 
   function createPlaylist(name) {
     if (!name || !db) return;
-    const tx = db.transaction("playlists", "readwrite");
-    const store = tx.objectStore("playlists");
-    const req = store.add({ name });
+    const req = db.transaction("playlists", "readwrite").objectStore("playlists").add({ name });
     req.onsuccess = async (e) => {
-      const id = e.target.result;
+      currentPlaylistId = e.target.result;
       showToast("Playlist created");
       await loadPlaylists();
-      // set current to new playlist
-      currentPlaylistId = id;
       await renderPlaylists();
       await loadSongsForCurrentPlaylist();
       populatePlaylistSelect();
     };
-    req.onerror = (e) => console.error("Create playlist error:", e);
   }
 
   function deletePlaylist(id) {
-    if (!db) return;
-    const ok = confirm("Delete this playlist and its songs?");
-    if (!ok) return;
-
+    if (!db || !confirm("Delete this playlist and its songs?")) return;
     const tx = db.transaction(["playlists", "songs"], "readwrite");
     const ps = tx.objectStore("playlists");
     const ss = tx.objectStore("songs");
-    // delete the playlist
     ps.delete(id);
-    // delete songs with this playlistId
-    const idx = ss.index("playlist_idx");
-    idx.openCursor(IDBKeyRange.only(id)).onsuccess = (e) => {
+    ss.index("playlist_idx").openCursor(IDBKeyRange.only(id)).onsuccess = (e) => {
       const cursor = e.target.result;
       if (cursor) {
         ss.delete(cursor.primaryKey);
@@ -260,18 +187,16 @@ window.addEventListener('DOMContentLoaded', () => {
       showToast("Playlist deleted");
       if (currentPlaylistId === id) currentPlaylistId = null;
       await loadPlaylists();
-      if (!currentPlaylistId && playlists.length > 0) currentPlaylistId = playlists[0].id;
+      if (!currentPlaylistId && playlists.length) currentPlaylistId = playlists[0].id;
       await renderPlaylists();
       await loadSongsForCurrentPlaylist();
       populatePlaylistSelect();
     };
-    tx.onerror = (e) => console.error("Delete playlist error:", e);
   }
 
   function renamePlaylist(id, newName) {
     if (!db || !newName) return;
-    const tx = db.transaction("playlists", "readwrite");
-    const store = tx.objectStore("playlists");
+    const store = db.transaction("playlists", "readwrite").objectStore("playlists");
     store.get(id).onsuccess = (e) => {
       const obj = e.target.result;
       if (!obj) return;
@@ -287,55 +212,51 @@ window.addEventListener('DOMContentLoaded', () => {
 
   async function renderPlaylists() {
     playlistList.innerHTML = "";
-    if (playlists.length === 0) {
+    if (!playlists.length) {
       const empty = document.createElement('div');
       empty.className = 'playlist';
       empty.textContent = "No playlists yet.";
       playlistList.appendChild(empty);
       return;
     }
-
     playlists.forEach(p => {
       const item = document.createElement('div');
       item.className = 'playlist';
       item.textContent = p.name;
       if (p.id === currentPlaylistId) {
-        item.style.backgroundColor = '#1db954';
+        item.style.background = '#1db954';
         item.style.color = '#121212';
       }
-      item.addEventListener('click', async () => {
+      item.onclick = async () => {
         currentPlaylistId = p.id;
         await loadSongsForCurrentPlaylist();
         await renderPlaylists();
-      });
+      };
 
-      // small action row
       const actions = document.createElement('div');
       actions.style.display = 'flex';
       actions.style.gap = '8px';
       actions.style.marginTop = '6px';
 
       const renameBtn = document.createElement('button');
-      renameBtn.textContent = "✏️";  
+      renameBtn.textContent = "✏️";
       renameBtn.className = 'btn';
-      renameBtn.addEventListener('click', (e) => {
+      renameBtn.onclick = (e) => {
         e.stopPropagation();
         const newName = prompt("New playlist name:", p.name);
-        if (newName && newName.trim()) renamePlaylist(p.id, newName.trim());
-      });
+        if (newName?.trim()) renamePlaylist(p.id, newName.trim());
+      };
 
       const deleteBtn = document.createElement('button');
       deleteBtn.textContent = "🗑️";
       deleteBtn.className = 'btn';
-      deleteBtn.addEventListener('click', (e) => {
+      deleteBtn.onclick = (e) => {
         e.stopPropagation();
         deletePlaylist(p.id);
-      });
+      };
 
-      actions.appendChild(renameBtn);
-      actions.appendChild(deleteBtn);
+      actions.append(renameBtn, deleteBtn);
       item.appendChild(actions);
-
       playlistList.appendChild(item);
     });
   }
@@ -348,25 +269,19 @@ window.addEventListener('DOMContentLoaded', () => {
       opt.textContent = p.name;
       playlistSelect.appendChild(opt);
     });
-    // Default to current playlist if exists
     if (currentPlaylistId) playlistSelect.value = currentPlaylistId;
   }
 
-  // Ensure a default playlist exists
   async function ensureDefaultPlaylists() {
-    const existing = await countStore("playlists");
-    if (existing === 0) {
+    if (await countStore("playlists") === 0) {
       await addToStore("playlists", { name: "My Library" });
       await addToStore("playlists", { name: "Demos" });
     }
   }
 
-  // Preload demo songs into "Demos" playlist only if it has no songs
   async function preloadDemosIfEmpty() {
     const demosPlaylist = await getPlaylistByName("Demos");
-    if (!demosPlaylist) return;
-    const demoCount = await countSongsInPlaylist(demosPlaylist.id);
-    if (demoCount > 0) return;
+    if (!demosPlaylist || await countSongsInPlaylist(demosPlaylist.id) > 0) return;
 
     const demos = [
       { name: "Wiz Khalifa - Black and Yellow", audioPath: "songs/song1.mp3", imagePath: "albums/song1.jpg" },
@@ -379,119 +294,80 @@ window.addEventListener('DOMContentLoaded', () => {
         const audioRes = await fetch(d.audioPath);
         if (!audioRes.ok) continue;
         const audioBlob = await audioRes.blob();
-
         let imageBlob = null;
         if (d.imagePath) {
           const imgRes = await fetch(d.imagePath);
           if (imgRes.ok) imageBlob = await imgRes.blob();
         }
-
         await addToStore("songs", { name: d.name, audioBlob, imageBlob, playlistId: demosPlaylist.id });
-      } catch (err) {
-        console.warn("Preload failed for:", d.name, err);
-      }
+      } catch (err) {}
     }
   }
 
-  // Small IndexedDB helpers
-  function countStore(storeName) {
-    return new Promise((resolve) => {
-      const tx = db.transaction(storeName, "readonly");
-      const store = tx.objectStore(storeName);
-      const req = store.count();
-      req.onsuccess = () => resolve(req.result || 0);
-      req.onerror = () => resolve(0);
-    });
-  }
+  // IndexedDB helpers
+  const countStore = (storeName) => new Promise((resolve) => {
+    const req = db.transaction(storeName, "readonly").objectStore(storeName).count();
+    req.onsuccess = () => resolve(req.result || 0);
+    req.onerror = () => resolve(0);
+  });
 
-  function addToStore(storeName, obj) {
-    return new Promise((resolve) => {
-      const tx = db.transaction(storeName, "readwrite");
-      const store = tx.objectStore(storeName);
-      const req = store.add(obj);
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => resolve(null);
-    });
-  }
+  const addToStore = (storeName, obj) => new Promise((resolve) => {
+    const req = db.transaction(storeName, "readwrite").objectStore(storeName).add(obj);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => resolve(null);
+  });
 
-  function getPlaylistByName(name) {
-    return new Promise((resolve) => {
-      const tx = db.transaction("playlists", "readonly");
-      const store = tx.objectStore("playlists");
-      const req = store.openCursor();
-      req.onsuccess = (e) => {
-        const cursor = e.target.result;
-        if (cursor) {
-          if (cursor.value.name === name) resolve(cursor.value);
-          else cursor.continue();
-        } else resolve(null);
-      };
-      req.onerror = () => resolve(null);
-    });
-  }
+  const getPlaylistByName = (name) => new Promise((resolve) => {
+    const req = db.transaction("playlists", "readonly").objectStore("playlists").openCursor();
+    req.onsuccess = (e) => {
+      const cursor = e.target.result;
+      if (cursor) {
+        cursor.value.name === name ? resolve(cursor.value) : cursor.continue();
+      } else resolve(null);
+    };
+    req.onerror = () => resolve(null);
+  });
 
-  function countSongsInPlaylist(playlistId) {
-    return new Promise((resolve) => {
-      const tx = db.transaction("songs", "readonly");
-      const store = tx.objectStore("songs");
-      const idx = store.index("playlist_idx");
-      const req = idx.count(IDBKeyRange.only(playlistId));
-      req.onsuccess = () => resolve(req.result || 0);
-      req.onerror = () => resolve(0);
-    });
-  }
+  const countSongsInPlaylist = (playlistId) => new Promise((resolve) => {
+    const req = db.transaction("songs", "readonly").objectStore("songs").index("playlist_idx").count(IDBKeyRange.only(playlistId));
+    req.onsuccess = () => resolve(req.result || 0);
+    req.onerror = () => resolve(0);
+  });
 
-  // Upload flow
   addSongBtn.addEventListener('click', () => {
     const nameInput = document.getElementById('songNameInput');
     const fileInput = document.getElementById('songFileInput');
     const imageInput = document.getElementById('songImageInput');
-
     const selectedPlaylistId = Number(playlistSelect.value || currentPlaylistId);
 
-    if (!nameInput.value || fileInput.files.length === 0) {
-      alert("Please enter a name and select an audio file.");
-      return;
-    }
-    if (!selectedPlaylistId) {
-      alert("Please select a playlist.");
-      return;
-    }
+    if (!nameInput.value || !fileInput.files.length) return alert("Please enter a name and select an audio file.");
+    if (!selectedPlaylistId) return alert("Please select a playlist.");
 
-    const file = fileInput.files[0];
-    const songName = nameInput.value.trim();
-    const imageFile = imageInput.files.length > 0 ? imageInput.files[0] : null;
-
-    saveSong(songName, file, imageFile, selectedPlaylistId);
-
-    nameInput.value = "";
-    fileInput.value = "";
-    if (imageInput) imageInput.value = "";
+    saveSong(nameInput.value.trim(), fileInput.files[0], imageInput.files[0] || null, selectedPlaylistId);
+    nameInput.value = fileInput.value = imageInput.value = "";
     overlay.classList.add("hidden");
   });
 
-  // Controls
   playButton.addEventListener('click', () => {
-    if (!audio.src) return;
-    if (audio.paused) audio.play();
-    else audio.pause();
+    if (audio.src) audio.paused ? audio.play() : audio.pause();
   });
 
   prevButton.addEventListener('click', () => {
     if (currentIndex > 0) playSong(currentIndex - 1);
   });
 
-  nextButton.addEventListener('click', () => {
-    if (songs.length === 0) return;
+  const playNext = () => {
+    if (!songs.length) return;
     if (isShuffling) {
-      const randomIndex = Math.floor(Math.random() * songs.length);
-      playSong(randomIndex);
+      playSong(Math.floor(Math.random() * songs.length));
     } else if (currentIndex < songs.length - 1) {
       playSong(currentIndex + 1);
     } else if (isLooping) {
       playSong(0);
     }
-  });
+  };
+
+  nextButton.addEventListener('click', playNext);
 
   loopButton.addEventListener('click', () => {
     isLooping = !isLooping;
@@ -503,19 +379,8 @@ window.addEventListener('DOMContentLoaded', () => {
     shuffleButton.classList.toggle('active', isShuffling);
   });
 
-  audio.addEventListener('ended', () => {
-    if (songs.length === 0) return;
-    if (isShuffling) {
-      const randomIndex = Math.floor(Math.random() * songs.length);
-      playSong(randomIndex);
-    } else if (currentIndex < songs.length - 1) {
-      playSong(currentIndex + 1);
-    } else if (isLooping) {
-      playSong(0);
-    }
-  });
+  audio.addEventListener('ended', playNext);
 
-  // Popup
   openmenubtn.addEventListener('click', () => {
     populatePlaylistSelect();
     overlay.classList.remove('hidden');
@@ -523,9 +388,8 @@ window.addEventListener('DOMContentLoaded', () => {
   closebtn.addEventListener('click', () => overlay.classList.add('hidden'));
   overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.classList.add("hidden"); });
 
-  // Playlist buttons
   newPlaylistBtn.addEventListener('click', () => {
     const name = prompt("New playlist name:");
-    if (name && name.trim()) createPlaylist(name.trim());
+    if (name?.trim()) createPlaylist(name.trim());
   });
 });
