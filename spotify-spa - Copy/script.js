@@ -5,19 +5,28 @@ window.addEventListener('DOMContentLoaded', () => {
   const playButton = document.getElementById('play');
   const prevButton = document.getElementById('prev');
   const nextButton = document.getElementById('next');
-  const loopButton = document.getElementById('loop');
-  const shuffleButton = document.getElementById('shuffle');
   const overlay = document.getElementById('uploadpopup');
   const closebtn = document.getElementById('closemenubtn');
   const openmenubtn = document.getElementById('openmenubtn');
   const addSongBtn = document.getElementById('addSongBtn');
   const songList = document.querySelector('.song-list');
+  const songListContainer = document.getElementById('songListContainer');
+  const searchInput = document.getElementById('searchInput');
   const playlistList = document.getElementById('playlistList');
   const newPlaylistBtn = document.getElementById('newPlaylistBtn');
   const playlistSelect = document.getElementById('playlistSelect');
   const toastEl = document.getElementById('toast');
+  const statsBtn = document.getElementById('statsBtn');
+  const statspopup = document.getElementById('statspopup');
+  const closestatsbtn = document.getElementById('closestatsbtn');
+  const statsContent = document.getElementById('statsContent');
+  const progressBar = document.getElementById('progressBar');
+  const currentTimeEl = document.getElementById('currentTime');
+  const durationEl = document.getElementById('duration');
+  const volumeSlider = document.getElementById('volumeSlider');
+  const queueList = document.getElementById('queueList');
 
-  let db, songs = [], currentIndex = -1, isLooping = false, isShuffling = false, playlists = [], currentPlaylistId = null;
+  let db, songs = [], filteredSongs = [], currentIndex = -1, playlists = [], currentPlaylistId = null, playCount = {}, audioCache = {}, likedSongs = new Set();
 
   const request = indexedDB.open("SpotifyCloneDB", 2);
   request.onupgradeneeded = (e) => {
@@ -58,8 +67,10 @@ window.addEventListener('DOMContentLoaded', () => {
     audio.src = song.audioURL;
     albumArt.src = song.imageURL || "album.jpg";
     songTitle.textContent = song.name;
+    playCount[song.id] = (playCount[song.id] || 0) + 1;
     audio.play();
     currentIndex = index;
+    updateQueueView();
   };
 
   function renderSong(songObj) {
@@ -70,8 +81,17 @@ window.addEventListener('DOMContentLoaded', () => {
     nameSpan.className = 'song-name';
     nameSpan.textContent = songObj.name;
 
+    const heartBtn = document.createElement('button');
+    heartBtn.className = 'heart-btn';
+    heartBtn.textContent = likedSongs.has(songObj.id) ? '♥' : '♡';
+    heartBtn.style.opacity = likedSongs.has(songObj.id) ? '1' : '0.4';
+    heartBtn.onclick = async (e) => {
+      e.stopPropagation();
+      await toggleLike(songObj);
+    };
+
     const deleteBtn = document.createElement('button');
-    deleteBtn.textContent = "❌";
+    deleteBtn.textContent = "×";
     deleteBtn.className = 'delete-btn';
     deleteBtn.title = "Delete song";
     deleteBtn.onclick = (e) => {
@@ -79,9 +99,36 @@ window.addEventListener('DOMContentLoaded', () => {
       if (confirm(`Delete "${songObj.name}" from this playlist?`)) deleteSong(songObj.id);
     };
 
-    row.append(nameSpan, deleteBtn);
+    row.append(nameSpan, heartBtn, deleteBtn);
     row.onclick = () => playSong(songs.findIndex(s => s.id === songObj.id));
-    songList.appendChild(row);
+    songListContainer.appendChild(row);
+  }
+
+  async function toggleLike(songObj) {
+    const likedPlaylist = await getPlaylistByName("Liked Songs");
+    if (!likedPlaylist) return;
+    
+    if (likedSongs.has(songObj.id)) {
+      // Remove from Liked Songs
+      likedSongs.delete(songObj.id);
+      const tx = db.transaction("songs", "readwrite");
+      tx.objectStore("songs").index("playlist_idx").openCursor(IDBKeyRange.only(likedPlaylist.id)).onsuccess = (e) => {
+        const cursor = e.target.result;
+        if (cursor && cursor.value.id === songObj.id) {
+          tx.objectStore("songs").delete(cursor.primaryKey);
+        } else if (cursor) {
+          cursor.continue();
+        }
+      };
+    } else {
+      // Add to Liked Songs
+      likedSongs.add(songObj.id);
+      await addToStore("songs", { name: songObj.name, audioBlob: audioCache[songObj.id], imageBlob: null, playlistId: likedPlaylist.id });
+    }
+    
+    rebuildSongUI();
+    await loadPlaylists();
+    await renderPlaylists();
   }
 
   function saveSong(name, audioBlob, imageBlob, playlistId) {
@@ -109,13 +156,14 @@ window.addEventListener('DOMContentLoaded', () => {
     songs = [];
     if (!db) return;
     return new Promise((resolve) => {
-      songList.innerHTML = "";
       const req = db.transaction("songs", "readonly").objectStore("songs").index("playlist_idx").openCursor(IDBKeyRange.only(playlistId));
       req.onsuccess = (e) => {
         const cursor = e.target.result;
         if (cursor) {
           const { id, name, audioBlob, imageBlob, playlistId: pid } = cursor.value;
-          songs.push({ id, name, audioURL: URL.createObjectURL(audioBlob), imageURL: imageBlob ? URL.createObjectURL(imageBlob) : null, playlistId: pid });
+          const audioURL = URL.createObjectURL(audioBlob);
+          audioCache[id] = audioBlob;
+          songs.push({ id, name, audioURL, imageURL: imageBlob ? URL.createObjectURL(imageBlob) : null, playlistId: pid });
           cursor.continue();
         } else resolve();
       };
@@ -124,14 +172,52 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   function rebuildSongUI() {
-    songList.innerHTML = "";
+    songListContainer.innerHTML = "";
+    filteredSongs = songs;
     if (!songs.length) {
       const empty = document.createElement('div');
       empty.className = 'song';
       empty.textContent = "No songs in this playlist yet.";
-      songList.appendChild(empty);
+      songListContainer.appendChild(empty);
     } else songs.forEach(renderSong);
+    updateStats();
+    updateQueueView();
   }
+
+  function updateStats() {
+    document.getElementById('totalSongs').textContent = songs.length;
+    document.getElementById('totalPlaylists').textContent = playlists.length;
+  }
+
+  function updateQueueView() {
+    queueList.innerHTML = '';
+    if (currentIndex < songs.length - 1) {
+      const nextSong = songs[currentIndex + 1];
+      const item = document.createElement('div');
+      item.className = 'queue-item';
+      item.textContent = nextSong.name;
+      queueList.appendChild(item);
+    } else {
+      const item = document.createElement('div');
+      item.className = 'queue-item';
+      item.textContent = 'No more songs';
+      queueList.appendChild(item);
+    }
+  }
+
+  function filterSongs(query) {
+    songListContainer.innerHTML = "";
+    const q = query.toLowerCase();
+    filteredSongs = songs.filter(s => s.name.toLowerCase().includes(q));
+    if (!filteredSongs.length) {
+      const empty = document.createElement('div');
+      empty.className = 'song';
+      empty.textContent = "No songs found.";
+      songListContainer.appendChild(empty);
+    } else filteredSongs.forEach(renderSong);
+  }
+
+  searchInput.addEventListener('input', (e) => filterSongs(e.target.value));
 
   function deleteSong(id) {
     if (!db) return;
@@ -217,6 +303,7 @@ window.addEventListener('DOMContentLoaded', () => {
       empty.className = 'playlist';
       empty.textContent = "No playlists yet.";
       playlistList.appendChild(empty);
+      updateStats();
       return;
     }
     playlists.forEach(p => {
@@ -224,13 +311,15 @@ window.addEventListener('DOMContentLoaded', () => {
       item.className = 'playlist';
       item.textContent = p.name;
       if (p.id === currentPlaylistId) {
-        item.style.background = '#1db954';
-        item.style.color = '#121212';
+        item.classList.add('active');
       }
       item.onclick = async () => {
+        // Remove active class from all playlists
+        document.querySelectorAll('.playlist').forEach(pl => pl.classList.remove('active'));
+        // Add active class to clicked playlist
+        item.classList.add('active');
         currentPlaylistId = p.id;
         await loadSongsForCurrentPlaylist();
-        await renderPlaylists();
       };
 
       const actions = document.createElement('div');
@@ -239,7 +328,7 @@ window.addEventListener('DOMContentLoaded', () => {
       actions.style.marginTop = '6px';
 
       const renameBtn = document.createElement('button');
-      renameBtn.textContent = "✏️";
+      renameBtn.textContent = "↻";
       renameBtn.className = 'btn';
       renameBtn.onclick = (e) => {
         e.stopPropagation();
@@ -248,7 +337,7 @@ window.addEventListener('DOMContentLoaded', () => {
       };
 
       const deleteBtn = document.createElement('button');
-      deleteBtn.textContent = "🗑️";
+                deleteBtn.textContent = "×";
       deleteBtn.className = 'btn';
       deleteBtn.onclick = (e) => {
         e.stopPropagation();
@@ -259,6 +348,7 @@ window.addEventListener('DOMContentLoaded', () => {
       item.appendChild(actions);
       playlistList.appendChild(item);
     });
+    updateStats();
   }
 
   function populatePlaylistSelect() {
@@ -277,6 +367,10 @@ window.addEventListener('DOMContentLoaded', () => {
       await addToStore("playlists", { name: "My Library" });
       await addToStore("playlists", { name: "Demos" });
     }
+    const likedExists = await getPlaylistByName("Liked Songs");
+    if (!likedExists) {
+      await addToStore("playlists", { name: "Liked Songs" });
+    }
   }
 
   async function preloadDemosIfEmpty() {
@@ -286,7 +380,13 @@ window.addEventListener('DOMContentLoaded', () => {
     const demos = [
       { name: "Wiz Khalifa - Black and Yellow", audioPath: "songs/song1.mp3", imagePath: "albums/song1.jpg" },
       { name: "Kendrick Lamar - Not Like Us", audioPath: "songs/song2.mp3", imagePath: "albums/song2.png" },
-      { name: "J. Cole - No Role Modelz", audioPath: "songs/song4.mp3", imagePath: "albums/song4.jpg" }
+      { name: "Kendrick Lamar - Swimming Pools", audioPath: "songs/song3.mp3", imagePath: "albums/song3.jpg" },
+      { name: "J. Cole - No Role Modelz", audioPath: "songs/song4.mp3", imagePath: "albums/song4.jpg" },
+      { name: "50 Cent - In Da Club", audioPath: "songs/song5.mp3", imagePath: "albums/song5.jpg" },
+      { name: "Chief Keef - Love Sosa", audioPath: "songs/song6.mp3", imagePath: "albums/song6.jpg" },
+      { name: "Fetty Wap - Trap Queen", audioPath: "songs/song7.mp3", imagePath: "albums/song7.jpg" },
+      { name: "A$AP Rocky - Fuckin' Problems", audioPath: "songs/song8.mp3", imagePath: "albums/song8.jpg" },
+      { name: "Jay-Z - Ni**as in Paris", audioPath: "songs/song9.mp3", imagePath: "albums/song9.jpg" }
     ];
 
     for (const d of demos) {
@@ -358,28 +458,55 @@ window.addEventListener('DOMContentLoaded', () => {
 
   const playNext = () => {
     if (!songs.length) return;
-    if (isShuffling) {
-      playSong(Math.floor(Math.random() * songs.length));
-    } else if (currentIndex < songs.length - 1) {
+    if (currentIndex < songs.length - 1) {
       playSong(currentIndex + 1);
-    } else if (isLooping) {
-      playSong(0);
     }
   };
 
   nextButton.addEventListener('click', playNext);
-
-  loopButton.addEventListener('click', () => {
-    isLooping = !isLooping;
-    loopButton.classList.toggle('active', isLooping);
-  });
-
-  shuffleButton.addEventListener('click', () => {
-    isShuffling = !isShuffling;
-    shuffleButton.classList.toggle('active', isShuffling);
-  });
-
+  
   audio.addEventListener('ended', playNext);
+ 
+  // Progress bar
+  audio.addEventListener('timeupdate', () => {
+    if (audio.duration) {
+      progressBar.value = (audio.currentTime / audio.duration) * 100;
+      currentTimeEl.textContent = formatTime(audio.currentTime);
+    }
+  });
+
+  audio.addEventListener('loadedmetadata', () => {
+    durationEl.textContent = formatTime(audio.duration);
+  });
+
+  progressBar.addEventListener('input', () => {
+    audio.currentTime = (progressBar.value / 100) * audio.duration;
+  });
+
+  // Volume control
+  volumeSlider.addEventListener('input', () => {
+    audio.volume = volumeSlider.value / 100;
+  });
+  audio.volume = 0.7;
+
+  // Keyboard shortcuts
+  document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space') {
+      e.preventDefault();
+      playButton.click();
+    } else if (e.code === 'ArrowRight') {
+      nextButton.click();
+    } else if (e.code === 'ArrowLeft') {
+      prevButton.click();
+    }
+  });
+
+  const formatTime = (seconds) => {
+    if (!seconds || isNaN(seconds)) return '0:00';
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return mins + ':' + (secs < 10 ? '0' : '') + secs;
+  };
 
   openmenubtn.addEventListener('click', () => {
     populatePlaylistSelect();
@@ -387,6 +514,18 @@ window.addEventListener('DOMContentLoaded', () => {
   });
   closebtn.addEventListener('click', () => overlay.classList.add('hidden'));
   overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.classList.add("hidden"); });
+
+  statsBtn.addEventListener('click', () => {
+    statsContent.innerHTML = `<div><strong>Total Songs:</strong> ${songs.length}</div><div><strong>Total Playlists:</strong> ${playlists.length}</div>`;
+    const sorted = songs.sort((a, b) => (playCount[b.id] || 0) - (playCount[a.id] || 0)).slice(0, 5);
+    if (sorted.length) {
+      statsContent.innerHTML += "<div style='margin-top: 15px;'><strong>Most Played:</strong></div>";
+      sorted.forEach(s => statsContent.innerHTML += `<div style='font-size: 0.9em; color: #bbb;'>${s.name} (${playCount[s.id] || 0} plays)</div>`);
+    }
+    statspopup.classList.remove('hidden');
+  });
+  closestatsbtn.addEventListener('click', () => statspopup.classList.add('hidden'));
+  statspopup.addEventListener('click', (e) => { if (e.target === statspopup) statspopup.classList.add("hidden"); });
 
   newPlaylistBtn.addEventListener('click', () => {
     const name = prompt("New playlist name:");

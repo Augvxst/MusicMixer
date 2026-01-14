@@ -3,24 +3,37 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NotSpotify</title>
+  <title>MusicMixer </title>
   <link rel="stylesheet" href="UI.css" />
-  <link rel="icon" href="assets/favicon.png" type="image/png">
+  <link rel="icon" href="assets/logo.jpg" type="image/png">
 </head>
 <body>
 <div class="leftbar">
   <h1>
-    <img src="assets/spotlogo.png" alt="spotlogo" style="width:100px;height:100px;">
-    <p>Spotify</p>
+    <img src="assets/logo-removebg-preview.png" alt="logo" style="width:100px;height:100px;">
+    <p>MusicMixer</p>
   </h1>
   <ul>
   </ul>
 
   <!-- Playlist sidebar -->
   <div class="playlist-list" id="playlistList"></div>
-  <button id="newPlaylistBtn">+ New Playlist</button>
+   
+  <!-- Buttons at bottom -->
+  <div class="sidebar-buttons">
+    <button id="newPlaylistBtn">+ New Playlist</button>
+    <button id="openmenubtn">Upload</button>
+     <button id="statsBtn">Stats</button>
+  </div>
+</div>
 
-  <button id="openmenubtn" style="margin-top: 12px;">Upload</button>
+<!-- Stats Popup -->
+<div id="statspopup" class="hidden">
+  <div class="upload">
+    <h3>Your Stats</h3>
+    <div id="statsContent"></div>
+    <button id="closestatsbtn">Close</button>
+  </div>
 </div>
 
 <!-- Upload Popup -->
@@ -45,18 +58,34 @@
 
   <!-- Main Player -->
   <div class="main">
-    <div class="song-list"></div>
+    <div class="song-list">
+      <input type="text" id="searchInput" placeholder="Search songs..." class="search-bar">
+      <div id="songListContainer"></div>
+    </div>
 
     <div class="user">
       <img src="album.jpg" alt="Album Art" class="user-photo" />
       <h2 id="title">Choose a Song</h2>
-      <audio id="audio" controls></audio>
+      <audio id="audio"></audio>
+      <div class="player-controls">
+        <div class="progress-container">
+          <span id="currentTime">0:00</span>
+          <input type="range" id="progressBar" class="progress-bar" min="0" max="100" value="0">
+          <span id="duration">0:00</span>
+        </div>
+        <div class="volume-container">
+          <label>🔊</label>
+          <input type="range" id="volumeSlider" class="volume-slider" min="0" max="100" value="70">
+        </div>
+      </div>
       <div class="buttons">
-        <button id="loop">🔁</button>
         <button id="prev">⏮</button>
         <button id="play">▶</button>
         <button id="next">⏭</button>
-        <button id="shuffle">🔀</button>
+      </div>
+      <div id="queueView" class="queue-view">
+        <h3>Next Up</h3>
+        <div id="queueList"></div>
       </div>
     </div>
   </div>
