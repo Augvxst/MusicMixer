@@ -1,4 +1,6 @@
 window.addEventListener('DOMContentLoaded', () => {
+  const loadingScreen = document.getElementById('loadingScreen');
+  
   const audio = document.getElementById('audio');
   const songTitle = document.getElementById('title');
   const albumArt = document.querySelector('.user-photo');
@@ -9,7 +11,6 @@ window.addEventListener('DOMContentLoaded', () => {
   const closebtn = document.getElementById('closemenubtn');
   const openmenubtn = document.getElementById('openmenubtn');
   const addSongBtn = document.getElementById('addSongBtn');
-  const songList = document.querySelector('.song-list');
   const songListContainer = document.getElementById('songListContainer');
   const searchInput = document.getElementById('searchInput');
   const playlistList = document.getElementById('playlistList');
@@ -25,10 +26,25 @@ window.addEventListener('DOMContentLoaded', () => {
   const durationEl = document.getElementById('duration');
   const volumeSlider = document.getElementById('volumeSlider');
   const queueList = document.getElementById('queueList');
+  const newPlaylistPopup = document.getElementById('newPlaylistPopup');
+  const newPlaylistInput = document.getElementById('newPlaylistInput');
+  const createPlaylistBtn = document.getElementById('createPlaylistBtn');
+  const cancelNewPlaylistBtn = document.getElementById('cancelNewPlaylistBtn');
+  const closeNewPlaylistBtn = document.getElementById('closeNewPlaylistBtn');
+  const renamePlaylistPopup = document.getElementById('renamePlaylistPopup');
+  const renamePlaylistInput = document.getElementById('renamePlaylistInput');
+  const saveRenamePlaylistBtn = document.getElementById('saveRenamePlaylistBtn');
+  const cancelRenamePlaylistBtn = document.getElementById('cancelRenamePlaylistBtn');
+  const closeRenamePlaylistBtn = document.getElementById('closeRenamePlaylistBtn');
+  const deleteConfirmPopup = document.getElementById('deleteConfirmPopup');
+  const closeDeleteConfirmBtn = document.getElementById('closeDeleteConfirmBtn');
+  const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+  const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
 
-  let db, songs = [], filteredSongs = [], currentIndex = -1, playlists = [], currentPlaylistId = null, playCount = {}, audioCache = {}, likedSongs = new Set();
+  let db, songs = [], filteredSongs = [], currentIndex = -1, playlists = [], currentPlaylistId = null, playCount = {}, audioCache = {}, likedSongs = new Set(), renamePlaylistId = null, playlistToDelete = null;
 
-  const request = indexedDB.open("SpotifyCloneDB", 2);
+  const request = indexedDB.open("SpotifyCloneDB", 3);
+  
   request.onupgradeneeded = (e) => {
     db = e.target.result;
     if (!db.objectStoreNames.contains("songs")) {
@@ -37,13 +53,80 @@ window.addEventListener('DOMContentLoaded', () => {
     if (!db.objectStoreNames.contains("playlists")) {
       db.createObjectStore("playlists", { keyPath: "id", autoIncrement: true }).createIndex("name_idx", "name", { unique: false });
     }
+      if (!db.objectStoreNames.contains("users")) {
+        db.createObjectStore("users", { keyPath: "username" });
+      }
     const songsStore = e.currentTarget.transaction.objectStore("songs");
     if (!songsStore.indexNames.contains("playlist_idx")) {
       songsStore.createIndex("playlist_idx", "playlistId", { unique: false });
     }
   };
   request.onsuccess = async (e) => {
-    db = e.target.result;
+    try {
+      db = e.target.result;
+      await ensureUsersStore();
+
+      setTimeout(() => {
+        showLoginScreen();
+      }, 2000);
+    } catch (error) {
+      console.error('Initialization error:', error);
+      hideLoadingScreen();
+    }
+  };
+  request.onerror = (e) => {
+    showToast("Storage failed. Changes won't persist.");
+    hideLoadingScreen();
+  };
+
+  const ensureUsersStore = () => new Promise((resolve, reject) => {
+    if (!db) return resolve();
+    if (db.objectStoreNames.contains("users")) return resolve();
+
+    const nextVersion = db.version + 1;
+    db.close();
+    const upgradeReq = indexedDB.open("SpotifyCloneDB", nextVersion);
+    upgradeReq.onupgradeneeded = (evt) => {
+      const upgradeDb = evt.target.result;
+      if (!upgradeDb.objectStoreNames.contains("users")) {
+        upgradeDb.createObjectStore("users", { keyPath: "username" });
+      }
+    };
+    upgradeReq.onsuccess = (evt) => {
+      db = evt.target.result;
+      resolve();
+    };
+    upgradeReq.onerror = () => reject(upgradeReq.error);
+  });
+
+  function showLoginScreen() {
+    const spinner = document.querySelector('.loading-spinner');
+    const loadingContent = document.querySelector('.loading-content');
+    const loginForm = document.getElementById('loginForm');
+    
+    if (spinner) {
+      spinner.style.opacity = '0';
+      setTimeout(() => {
+        if (spinner) spinner.style.display = 'none';
+      }, 300);
+    }
+    
+    setTimeout(() => {
+      if (loadingContent) {
+        loadingContent.classList.add('slide-up');
+        loadingContent.classList.add('login-mode');
+      }
+      
+      setTimeout(() => {
+        if (loginForm) {
+          loginForm.classList.remove('hidden');
+          setTimeout(() => loginForm.classList.add('show'), 50);
+        }
+      }, 400);
+    }, 300);
+  }
+
+  async function initializeApp() {
     await ensureDefaultPlaylists();
     await preloadDemosIfEmpty();
     await loadPlaylists();
@@ -51,8 +134,160 @@ window.addEventListener('DOMContentLoaded', () => {
     await renderPlaylists();
     await loadSongsForCurrentPlaylist();
     populatePlaylistSelect();
-  };
-  request.onerror = (e) => showToast("Storage failed. Changes won't persist.");
+    hideLoadingScreen();
+  }
+
+  function hideLoadingScreen() {
+    const loadingScreen = document.getElementById('loadingScreen');
+    if (loadingScreen) {
+      loadingScreen.classList.add('fade-out');
+      setTimeout(() => {
+        if (loadingScreen) loadingScreen.remove();
+      }, 1000);
+    }
+  }
+
+  async function signup(username, password) {
+    if (!username || !password) {
+      return { success: false, message: "Username and password required" };
+    }
+
+    await ensureUsersStore();
+
+    const existingUser = await getUser(username);
+    if (existingUser) {
+      return { success: false, message: "Username already exists" };
+    }
+    const createdId = await addToStore("users", { username, password });
+    if (!createdId) {
+      return { success: false, message: "Failed to create account" };
+    }
+    return { success: true };
+  }
+
+  async function login(username, password) {
+    if (!username || !password) {
+      return { success: false, message: "Username and password required" };
+    }
+
+    await ensureUsersStore();
+    
+    const user = await getUser(username);
+    if (!user) {
+      return { success: false, message: "User not found" };
+    }
+    
+    if (user.password !== password) {
+      return { success: false, message: "Incorrect password" };
+    }
+    
+    return { success: true };
+  }
+
+  const getUser = (username) => new Promise((resolve) => {
+    if (!db) return resolve(null);
+    try {
+      const req = db.transaction("users", "readonly").objectStore("users").get(username);
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror = () => resolve(null);
+    } catch (err) {
+      resolve(null);
+    }
+  });
+
+  const loginTab = document.getElementById('loginTab');
+  const signupTab = document.getElementById('signupTab');
+  const loginPanel = document.getElementById('loginPanel');
+  const signupPanel = document.getElementById('signupPanel');
+  const loginBtn = document.getElementById('loginBtn');
+  const signupBtn = document.getElementById('signupBtn');
+  const loginError = document.getElementById('loginError');
+  const signupError = document.getElementById('signupError');
+
+  if (loginTab) {
+    loginTab.addEventListener('click', () => {
+      loginTab.classList.add('active');
+      signupTab.classList.remove('active');
+      loginPanel.classList.remove('hidden');
+      signupPanel.classList.add('hidden');
+      loginError.textContent = '';
+    });
+  }
+
+  if (signupTab) {
+    signupTab.addEventListener('click', () => {
+      signupTab.classList.add('active');
+      loginTab.classList.remove('active');
+      signupPanel.classList.remove('hidden');
+      loginPanel.classList.add('hidden');
+      signupError.textContent = '';
+    });
+  }
+
+  if (loginBtn) {
+    loginBtn.addEventListener('click', async () => {
+      const username = document.getElementById('loginUsername').value.trim();
+      const password = document.getElementById('loginPassword').value;
+      loginError.textContent = '';
+
+      try {
+        const result = await login(username, password);
+        if (result.success) {
+          try {
+            await initializeApp();
+          } catch (initErr) {
+            console.error('App init failed:', initErr);
+            hideLoadingScreen();
+          }
+        } else {
+          loginError.textContent = result.message;
+        }
+      } catch (err) {
+        loginError.textContent = "Log in failed. Please try again.";
+      }
+    });
+  }
+
+  if (signupBtn) {
+    signupBtn.addEventListener('click', async () => {
+      const username = document.getElementById('signupUsername').value.trim();
+      const password = document.getElementById('signupPassword').value;
+      const confirm = document.getElementById('signupConfirm').value;
+      
+      if (password !== confirm) {
+        signupError.textContent = "Passwords don't match";
+        return;
+      }
+      
+      const result = await signup(username, password);
+      if (result.success) {
+        signupError.textContent = '';
+        showToast("Account created! Please log in.");
+        loginTab.click();
+        document.getElementById('loginUsername').value = username;
+      } else {
+        signupError.textContent = result.message;
+      }
+    });
+  }
+
+  ['loginUsername', 'loginPassword'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') loginBtn.click();
+      });
+    }
+  });
+
+  ['signupUsername', 'signupPassword', 'signupConfirm'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') signupBtn.click();
+      });
+    }
+  });
 
   const showToast = (msg) => {
     if (!toastEl) return;
@@ -109,7 +344,6 @@ window.addEventListener('DOMContentLoaded', () => {
     if (!likedPlaylist) return;
     
     if (likedSongs.has(songObj.id)) {
-      // Remove from Liked Songs
       likedSongs.delete(songObj.id);
       const tx = db.transaction("songs", "readwrite");
       tx.objectStore("songs").index("playlist_idx").openCursor(IDBKeyRange.only(likedPlaylist.id)).onsuccess = (e) => {
@@ -121,7 +355,6 @@ window.addEventListener('DOMContentLoaded', () => {
         }
       };
     } else {
-      // Add to Liked Songs
       likedSongs.add(songObj.id);
       await addToStore("songs", { name: songObj.name, audioBlob: audioCache[songObj.id], imageBlob: null, playlistId: likedPlaylist.id });
     }
@@ -257,7 +490,14 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   function deletePlaylist(id) {
-    if (!db || !confirm("Delete this playlist and its songs?")) return;
+    if (!db) return;
+    playlistToDelete = id;
+    deleteConfirmPopup.classList.remove('hidden');
+  }
+
+  const performDelete = () => {
+    if (!playlistToDelete || !db) return;
+    const id = playlistToDelete;
     const tx = db.transaction(["playlists", "songs"], "readwrite");
     const ps = tx.objectStore("playlists");
     const ss = tx.objectStore("songs");
@@ -277,8 +517,10 @@ window.addEventListener('DOMContentLoaded', () => {
       await renderPlaylists();
       await loadSongsForCurrentPlaylist();
       populatePlaylistSelect();
+      deleteConfirmPopup.classList.add('hidden');
+      playlistToDelete = null;
     };
-  }
+  };
 
   function renamePlaylist(id, newName) {
     if (!db || !newName) return;
@@ -314,9 +556,7 @@ window.addEventListener('DOMContentLoaded', () => {
         item.classList.add('active');
       }
       item.onclick = async () => {
-        // Remove active class from all playlists
         document.querySelectorAll('.playlist').forEach(pl => pl.classList.remove('active'));
-        // Add active class to clicked playlist
         item.classList.add('active');
         currentPlaylistId = p.id;
         await loadSongsForCurrentPlaylist();
@@ -332,8 +572,10 @@ window.addEventListener('DOMContentLoaded', () => {
       renameBtn.className = 'btn';
       renameBtn.onclick = (e) => {
         e.stopPropagation();
-        const newName = prompt("New playlist name:", p.name);
-        if (newName?.trim()) renamePlaylist(p.id, newName.trim());
+        renamePlaylistId = p.id;
+        renamePlaylistInput.value = p.name;
+        renamePlaylistPopup.classList.remove('hidden');
+        setTimeout(() => renamePlaylistInput.select(), 100);
       };
 
       const deleteBtn = document.createElement('button');
@@ -404,7 +646,6 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // IndexedDB helpers
   const countStore = (storeName) => new Promise((resolve) => {
     const req = db.transaction(storeName, "readonly").objectStore(storeName).count();
     req.onsuccess = () => resolve(req.result || 0);
@@ -467,7 +708,6 @@ window.addEventListener('DOMContentLoaded', () => {
   
   audio.addEventListener('ended', playNext);
  
-  // Progress bar
   audio.addEventListener('timeupdate', () => {
     if (audio.duration) {
       progressBar.value = (audio.currentTime / audio.duration) * 100;
@@ -483,13 +723,11 @@ window.addEventListener('DOMContentLoaded', () => {
     audio.currentTime = (progressBar.value / 100) * audio.duration;
   });
 
-  // Volume control
   volumeSlider.addEventListener('input', () => {
     audio.volume = volumeSlider.value / 100;
   });
   audio.volume = 0.7;
 
-  // Keyboard shortcuts
   document.addEventListener('keydown', (e) => {
     if (e.code === 'Space') {
       e.preventDefault();
@@ -528,7 +766,85 @@ window.addEventListener('DOMContentLoaded', () => {
   statspopup.addEventListener('click', (e) => { if (e.target === statspopup) statspopup.classList.add("hidden"); });
 
   newPlaylistBtn.addEventListener('click', () => {
-    const name = prompt("New playlist name:");
-    if (name?.trim()) createPlaylist(name.trim());
+    newPlaylistInput.value = '';
+    newPlaylistPopup.classList.remove('hidden');
+    setTimeout(() => newPlaylistInput.focus(), 100);
+  });
+
+  createPlaylistBtn.addEventListener('click', () => {
+    const name = newPlaylistInput.value.trim();
+    if (name) {
+      createPlaylist(name);
+      newPlaylistPopup.classList.add('hidden');
+    }
+  });
+
+  cancelNewPlaylistBtn.addEventListener('click', () => newPlaylistPopup.classList.add('hidden'));
+  closeNewPlaylistBtn.addEventListener('click', () => newPlaylistPopup.classList.add('hidden'));
+  newPlaylistPopup.addEventListener('click', (e) => { if (e.target === newPlaylistPopup) newPlaylistPopup.classList.add('hidden'); });
+
+  newPlaylistInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      createPlaylistBtn.click();
+    }
+  });
+
+  saveRenamePlaylistBtn.addEventListener('click', () => {
+    const newName = renamePlaylistInput.value.trim();
+    if (newName && renamePlaylistId) {
+      renamePlaylist(renamePlaylistId, newName);
+      renamePlaylistPopup.classList.add('hidden');
+      renamePlaylistId = null;
+    }
+  });
+
+  cancelRenamePlaylistBtn.addEventListener('click', () => {
+    renamePlaylistPopup.classList.add('hidden');
+    renamePlaylistId = null;
+  });
+  
+  closeRenamePlaylistBtn.addEventListener('click', () => {
+    renamePlaylistPopup.classList.add('hidden');
+    renamePlaylistId = null;
+  });
+  
+  renamePlaylistPopup.addEventListener('click', (e) => {
+    if (e.target === renamePlaylistPopup) {
+      renamePlaylistPopup.classList.add('hidden');
+      renamePlaylistId = null;
+    }
+  });
+
+  if (confirmDeleteBtn) {
+    confirmDeleteBtn.addEventListener('click', performDelete);
+  }
+
+  const closeDeleteModal = () => {
+    deleteConfirmPopup.classList.add('hidden');
+    playlistToDelete = null;
+  };
+
+  if (cancelDeleteBtn) {
+    cancelDeleteBtn.addEventListener('click', closeDeleteModal);
+  }
+
+  if (closeDeleteConfirmBtn) {
+    closeDeleteConfirmBtn.addEventListener('click', closeDeleteModal);
+  }
+
+  if (deleteConfirmPopup) {
+    deleteConfirmPopup.addEventListener('click', (e) => {
+      if (e.target === deleteConfirmPopup) {
+        closeDeleteModal();
+      }
+    });
+  }
+
+  renamePlaylistInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      saveRenamePlaylistBtn.click();
+    }
   });
 });
