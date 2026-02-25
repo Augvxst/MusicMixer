@@ -5,6 +5,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const songTitle = document.getElementById('title');
   const albumArt = document.querySelector('.user-photo');
   const playButton = document.getElementById('play');
+  const pauseButton = document.getElementById('pause');
   const prevButton = document.getElementById('prev');
   const nextButton = document.getElementById('next');
   const overlay = document.getElementById('uploadpopup');
@@ -41,7 +42,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
   const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
 
-  let db, songs = [], filteredSongs = [], currentIndex = -1, playlists = [], currentPlaylistId = null, playCount = {}, audioCache = {}, likedSongs = new Set(), renamePlaylistId = null, playlistToDelete = null;
+  let db, songs = [], filteredSongs = [], currentIndex = -1, playlists = [], currentPlaylistId = null, playCount = {}, audioCache = {}, imageCache = {}, likedSongs = new Set(), renamePlaylistId = null, playlistToDelete = null;
 
   const request = indexedDB.open("SpotifyCloneDB", 3);
   
@@ -356,7 +357,7 @@ window.addEventListener('DOMContentLoaded', () => {
       };
     } else {
       likedSongs.add(songObj.id);
-      await addToStore("songs", { name: songObj.name, audioBlob: audioCache[songObj.id], imageBlob: null, playlistId: likedPlaylist.id });
+      await addToStore("songs", { name: songObj.name, audioBlob: audioCache[songObj.id], imageBlob: imageCache[songObj.id] || null, playlistId: likedPlaylist.id });
     }
     
     rebuildSongUI();
@@ -396,6 +397,7 @@ window.addEventListener('DOMContentLoaded', () => {
           const { id, name, audioBlob, imageBlob, playlistId: pid } = cursor.value;
           const audioURL = URL.createObjectURL(audioBlob);
           audioCache[id] = audioBlob;
+          imageCache[id] = imageBlob || null;
           songs.push({ id, name, audioURL, imageURL: imageBlob ? URL.createObjectURL(imageBlob) : null, playlistId: pid });
           cursor.continue();
         } else resolve();
@@ -675,6 +677,21 @@ window.addEventListener('DOMContentLoaded', () => {
     req.onerror = () => resolve(0);
   });
 
+  const getAllSongs = () => new Promise((resolve) => {
+    const allSongs = [];
+    const req = db.transaction("songs", "readonly").objectStore("songs").openCursor();
+    req.onsuccess = (e) => {
+      const cursor = e.target.result;
+      if (cursor) {
+        allSongs.push({ id: cursor.value.id, name: cursor.value.name, playlistId: cursor.value.playlistId });
+        cursor.continue();
+      } else {
+        resolve(allSongs);
+      }
+    };
+    req.onerror = () => resolve(allSongs);
+  });
+
   addSongBtn.addEventListener('click', () => {
     const nameInput = document.getElementById('songNameInput');
     const fileInput = document.getElementById('songFileInput');
@@ -690,7 +707,11 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 
   playButton.addEventListener('click', () => {
-    if (audio.src) audio.paused ? audio.play() : audio.pause();
+    if (audio.src && audio.paused) audio.play();
+  });
+
+  pauseButton.addEventListener('click', () => {
+    if (audio.src && !audio.paused) audio.pause();
   });
 
   prevButton.addEventListener('click', () => {
@@ -753,9 +774,12 @@ window.addEventListener('DOMContentLoaded', () => {
   closebtn.addEventListener('click', () => overlay.classList.add('hidden'));
   overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.classList.add("hidden"); });
 
-  statsBtn.addEventListener('click', () => {
-    statsContent.innerHTML = `<div><strong>Total Songs:</strong> ${songs.length}</div><div><strong>Total Playlists:</strong> ${playlists.length}</div>`;
-    const sorted = songs.sort((a, b) => (playCount[b.id] || 0) - (playCount[a.id] || 0)).slice(0, 5);
+  statsBtn.addEventListener('click', async () => {
+    const allSongs = await getAllSongs();
+    const totalPlays = allSongs.reduce((sum, s) => sum + (playCount[s.id] || 0), 0);
+
+    statsContent.innerHTML = `<div><strong>Total Songs:</strong> ${allSongs.length}</div><div><strong>Total Playlists:</strong> ${playlists.length}</div><div><strong>Total Plays:</strong> ${totalPlays}</div>`;
+    const sorted = [...allSongs].sort((a, b) => (playCount[b.id] || 0) - (playCount[a.id] || 0)).slice(0, 5);
     if (sorted.length) {
       statsContent.innerHTML += "<div style='margin-top: 15px;'><strong>Most Played:</strong></div>";
       sorted.forEach(s => statsContent.innerHTML += `<div style='font-size: 0.9em; color: #bbb;'>${s.name} (${playCount[s.id] || 0} plays)</div>`);
