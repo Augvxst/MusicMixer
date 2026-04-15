@@ -214,41 +214,14 @@
   </div>
 </div>
 
-<div id="exportConfirmPopup" class="modal-overlay hidden">
-  <div class="modal-content modal-small">
-    <div class="modal-header">
-      <h2>Export Backup</h2>
-      <button type="button" id="closeExportConfirmBtn" class="modal-close">×</button>
-    </div>
-    <div class="modal-body">
-      <p class="confirm-message">Choose which account data you want to export.</p>
-      <div class="form-group">
-        <label for="exportScopeSelect">Export scope</label>
-        <select id="exportScopeSelect">
-          <option value="all">All accounts</option>
-          <option value="specific">Specific account</option>
-        </select>
-      </div>
-      <div id="exportProfileRow" class="form-group hidden">
-        <label for="exportProfileSelect">Account</label>
-        <select id="exportProfileSelect"></select>
-      </div>
-      <div class="modal-footer">
-        <button type="button" id="cancelExportBtn" class="btn-secondary">Cancel</button>
-        <button type="button" id="confirmExportBtn" class="btn-primary">Export</button>
-      </div>
-    </div>
-  </div>
-</div>
-
 <div id="importConfirmPopup" class="modal-overlay hidden">
   <div class="modal-content modal-small">
     <div class="modal-header">
-      <h2>Import Stats</h2>
+      <h2 id="importConfirmTitle">Confirm Action</h2>
       <button type="button" id="closeImportConfirmBtn" class="modal-close">×</button>
     </div>
     <div class="modal-body">
-      <p id="importConfirmMessage" class="confirm-message">Importing stats will overwrite play counts for matched songs.</p>
+      <p id="importConfirmMessage" class="confirm-message">Are you sure?</p>
       <div class="modal-footer">
         <button type="button" id="cancelImportBtn" class="btn-secondary">Cancel</button>
         <button type="button" id="confirmImportBtn" class="btn-primary">Import</button>

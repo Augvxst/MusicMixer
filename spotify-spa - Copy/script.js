@@ -76,13 +76,7 @@ window.addEventListener('DOMContentLoaded', () => {
       closeDeleteConfirmBtn: byId('closeDeleteConfirmBtn'),
       cancelDeleteBtn: byId('cancelDeleteBtn'),
       confirmDeleteBtn: byId('confirmDeleteBtn'),
-      exportConfirmPopup: byId('exportConfirmPopup'),
-      closeExportConfirmBtn: byId('closeExportConfirmBtn'),
-      cancelExportBtn: byId('cancelExportBtn'),
-      confirmExportBtn: byId('confirmExportBtn'),
-      exportScopeSelect: byId('exportScopeSelect'),
-      exportProfileRow: byId('exportProfileRow'),
-      exportProfileSelect: byId('exportProfileSelect'),
+      importConfirmTitle: byId('importConfirmTitle'),
       importConfirmPopup: byId('importConfirmPopup'),
       importConfirmMessage: byId('importConfirmMessage'),
       closeImportConfirmBtn: byId('closeImportConfirmBtn'),
@@ -169,13 +163,7 @@ window.addEventListener('DOMContentLoaded', () => {
       closeDeleteConfirmBtn,
       cancelDeleteBtn,
       confirmDeleteBtn,
-      exportConfirmPopup,
-      closeExportConfirmBtn,
-      cancelExportBtn,
-      confirmExportBtn,
-      exportScopeSelect,
-      exportProfileRow,
-      exportProfileSelect,
+      importConfirmTitle,
       importConfirmPopup,
       importConfirmMessage,
       closeImportConfirmBtn,
@@ -212,101 +200,40 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   };
 
-  const exportBackupState = {
-    ready: false,
-    busy: false,
-    allBackup: null,
-    profileBackups: new Map(),
-    timestamp: ''
+  const getPreferredPlaylistId = (playlistRows) => {
+    if (!Array.isArray(playlistRows) || !playlistRows.length) return null;
+    const demoPlaylist = playlistRows.find((playlist) => playlist.name === PLAYLIST_DEMOS);
+    return demoPlaylist ? demoPlaylist.id : playlistRows[0].id;
   };
 
-  const setExportConfirmBusy = (isBusy, label = 'Export') => {
-    if (!confirmExportBtn) return;
-    confirmExportBtn.disabled = isBusy;
-    confirmExportBtn.textContent = isBusy ? 'Preparing...' : label;
+  const closeStyledConfirm = (result = false) => {
+    hideModal(importConfirmPopup);
+    const resolver = pendingConfirmResolve;
+    pendingConfirmResolve = null;
+    if (resolver) resolver(result);
   };
 
-  const prepareExportBackupState = async () => {
-    if (exportBackupState.busy || exportBackupState.ready) return;
-    exportBackupState.busy = true;
-    exportBackupState.ready = false;
-    exportBackupState.profileBackups = new Map();
-    exportBackupState.allBackup = null;
-    exportBackupState.timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-
-    try {
-      const users = await getAllUsers();
-      const profiles = [];
-
-      for (const username of users) {
-        const payload = await buildProfileBackupPayload(username);
-        exportBackupState.profileBackups.set(username, payload);
-        profiles.push(payload);
-      }
-
-      exportBackupState.allBackup = {
-        app: 'MusicMixer',
-        schemaVersion: 2,
-        exportedAt: new Date().toISOString(),
-        scope: 'all-accounts',
-        profiles
-      };
-
-      exportBackupState.ready = true;
-    } finally {
-      exportBackupState.busy = false;
+  const requestStyledConfirmation = ({ title, message, confirmLabel = 'Confirm' }) => new Promise((resolve) => {
+    if (!importConfirmPopup || !importConfirmMessage || !confirmImportBtn || !importConfirmTitle) {
+      resolve(confirm(message));
+      return;
     }
-  };
 
-  const showExportConfirmModal = async () => {
-    if (!exportConfirmPopup || !exportScopeSelect || !exportProfileRow || !exportProfileSelect) return;
-
-    exportScopeSelect.value = 'all';
-    exportProfileRow.classList.add(HIDDEN_CLASS);
-    exportProfileSelect.innerHTML = '';
-    exportProfileSelect.disabled = true;
-    exportBackupState.ready = false;
-    exportBackupState.busy = false;
-    exportBackupState.allBackup = null;
-    exportBackupState.profileBackups = new Map();
-
-    showModal(exportConfirmPopup);
-    setTimeout(() => exportConfirmBtn && exportConfirmBtn.focus(), 0);
-    setExportConfirmBusy(true);
-
-    try {
-      const users = await getAllUsers();
-      users.forEach((username) => {
-        const option = document.createElement('option');
-        option.value = username;
-        option.textContent = username;
-        exportProfileSelect.appendChild(option);
-      });
-
-      if (!users.includes(activeProfile)) {
-        const option = document.createElement('option');
-        option.value = activeProfile;
-        option.textContent = activeProfile;
-        exportProfileSelect.appendChild(option);
-      }
-
-      exportProfileSelect.value = activeProfile;
-      await prepareExportBackupState();
-    } catch (err) {
-      const fallbackOption = document.createElement('option');
-      fallbackOption.value = activeProfile;
-      fallbackOption.textContent = activeProfile;
-      exportProfileSelect.appendChild(fallbackOption);
-      exportProfileSelect.value = activeProfile;
-      await prepareExportBackupState().catch(() => {});
-    } finally {
-      exportProfileSelect.disabled = false;
-      setExportConfirmBusy(false);
+    if (pendingConfirmResolve) {
+      const previous = pendingConfirmResolve;
+      pendingConfirmResolve = null;
+      previous(false);
     }
-  };
+
+    importConfirmTitle.textContent = title;
+    importConfirmMessage.textContent = message;
+    confirmImportBtn.textContent = confirmLabel;
+    pendingConfirmResolve = resolve;
+    showModal(importConfirmPopup);
+  });
 
   let db, songs = [], currentIndex = -1, playlists = [], currentPlaylistId = null, playCount = {}, audioCache = {}, imageCache = {}, likedSongs = new Set(), renamePlaylistId = null, playlistToDelete = null, likedPlaylistId = null;
-  let pendingStatsImportEntries = null;
+  let pendingConfirmResolve = null;
   let activeProfile = ADMIN_ACCOUNT_NAME;
   let currentSessionUser = null;
   let isMasterSession = false;
@@ -407,12 +334,8 @@ window.addEventListener('DOMContentLoaded', () => {
     applyTheme(preferences.theme);
     await ensureDefaultPlaylists();
     await preloadDemosIfEmpty();
-    await loadPlaylists();
-    await refreshLikedSongsSet();
-    if (!currentPlaylistId && playlists.length) currentPlaylistId = playlists[0].id;
-    await renderPlaylists();
-    await loadSongsForCurrentPlaylist();
-    populatePlaylistSelect();
+    await normalizeDefaultPlaylists(activeProfile);
+    await syncLibraryView();
     await syncProfileSwitchUI();
     hideLoadingScreen();
   }
@@ -766,12 +689,8 @@ window.addEventListener('DOMContentLoaded', () => {
     applyTheme(preferences.theme);
     await ensureDefaultPlaylists();
     await preloadDemosIfEmpty();
-    await loadPlaylists();
-    currentPlaylistId = playlists.length ? playlists[0].id : null;
-    await refreshLikedSongsSet();
-    await renderPlaylists();
-    await loadSongsForCurrentPlaylist();
-    populatePlaylistSelect();
+    await normalizeDefaultPlaylists(activeProfile);
+    await syncLibraryView();
     syncPreferenceUI();
     const snapshot = await buildStatsSnapshot();
     renderStatsSnapshot(snapshot);
@@ -797,6 +716,8 @@ window.addEventListener('DOMContentLoaded', () => {
     for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
     return new Blob([bytes], { type: mime });
   };
+
+  const createPlaceholderAudioBlob = () => new Blob([], { type: 'audio/mpeg' });
 
   function applyTheme(theme) {
     document.body.classList.toggle('light-mode', theme === 'light');
@@ -953,6 +874,7 @@ window.addEventListener('DOMContentLoaded', () => {
   async function loadSongsForCurrentPlaylist() {
     if (!currentPlaylistId) {
       songs = [];
+      currentIndex = -1;
       rebuildSongUI();
       return;
     }
@@ -975,15 +897,22 @@ window.addEventListener('DOMContentLoaded', () => {
           const row = cursor.value;
           if (isRowForActiveProfile(row)) {
             const { id, name, audioBlob, imageBlob, playlistId: pid, originalSongId } = row;
-            const audioURL = URL.createObjectURL(audioBlob);
-            audioCache[id] = audioBlob;
+            const resolvedAudioBlob = audioBlob || createPlaceholderAudioBlob();
+            const audioURL = URL.createObjectURL(resolvedAudioBlob);
+            audioCache[id] = resolvedAudioBlob;
             imageCache[id] = imageBlob || null;
             songs.push({ id, name, audioURL, imageURL: imageBlob ? URL.createObjectURL(imageBlob) : null, playlistId: pid, originalSongId: originalSongId || null });
           }
           cursor.continue();
-        } else resolve();
+        } else {
+          currentIndex = songs.length ? 0 : -1;
+          resolve();
+        }
       };
-      req.onerror = () => resolve();
+      req.onerror = () => {
+        currentIndex = -1;
+        resolve();
+      };
     });
   }
 
@@ -1076,10 +1005,7 @@ window.addEventListener('DOMContentLoaded', () => {
     req.onsuccess = async (e) => {
       currentPlaylistId = e.target.result;
       showToast("Playlist created");
-      await loadPlaylists();
-      await renderPlaylists();
-      await loadSongsForCurrentPlaylist();
-      populatePlaylistSelect();
+      await syncLibraryView({ focusPlaylistId: currentPlaylistId });
     };
   }
 
@@ -1108,11 +1034,7 @@ window.addEventListener('DOMContentLoaded', () => {
     tx.oncomplete = async () => {
       showToast("Playlist deleted");
       if (currentPlaylistId === id) currentPlaylistId = null;
-      await loadPlaylists();
-      if (!currentPlaylistId && playlists.length) currentPlaylistId = playlists[0].id;
-      await renderPlaylists();
-      await loadSongsForCurrentPlaylist();
-      populatePlaylistSelect();
+      await syncLibraryView();
       hideModal(deleteConfirmPopup);
       playlistToDelete = null;
     };
@@ -1127,9 +1049,7 @@ window.addEventListener('DOMContentLoaded', () => {
       obj.name = newName;
       store.put(obj).onsuccess = async () => {
         showToast("Playlist renamed");
-        await loadPlaylists();
-        await renderPlaylists();
-        populatePlaylistSelect();
+        await syncLibraryView({ focusPlaylistId: currentPlaylistId });
       };
     };
   }
@@ -1220,8 +1140,13 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   async function preloadDemosIfEmpty() {
-    const demosPlaylist = await getPlaylistByName(PLAYLIST_DEMOS);
-    if (!demosPlaylist || await countSongsInPlaylist(demosPlaylist.id) > 0) return;
+    const demosPlaylists = await getProfilePlaylistsByName(PLAYLIST_DEMOS);
+    if (!demosPlaylists.length) return;
+
+    const demoCounts = await Promise.all(demosPlaylists.map((playlist) => countSongsInPlaylist(playlist.id)));
+    if (demoCounts.some((count) => count > 0)) return;
+
+    const demosPlaylist = demosPlaylists[0];
 
     const demos = [
       { name: "Wiz Khalifa - Black and Yellow", audioPath: "songs/song1.mp3", imagePath: "albums/song1.jpg" },
@@ -1486,6 +1411,77 @@ window.addEventListener('DOMContentLoaded', () => {
     req.onerror = () => resolve(rows);
   });
 
+  const getProfilePlaylistsByName = async (name, profileName = activeProfile) => {
+    const rows = await getAllStoreRows('playlists');
+    return rows.filter((row) => row.name === name && isRowForProfile(row, profileName));
+  };
+
+  const rewriteSongsToPlaylist = (fromPlaylistIds, toPlaylistId) => new Promise((resolve) => {
+    if (!db || !fromPlaylistIds.size) return resolve(true);
+    const tx = db.transaction('songs', 'readwrite');
+    const store = tx.objectStore('songs');
+    const req = store.openCursor();
+    req.onsuccess = (e) => {
+      const cursor = e.target.result;
+      if (cursor) {
+        if (fromPlaylistIds.has(cursor.value.playlistId)) {
+          cursor.update({ ...cursor.value, playlistId: toPlaylistId });
+        }
+        cursor.continue();
+      }
+    };
+    tx.oncomplete = () => resolve(true);
+    tx.onerror = () => resolve(false);
+  });
+
+  const deletePlaylistsByIds = (playlistIds) => new Promise((resolve) => {
+    if (!db || !playlistIds.size) return resolve(true);
+    const tx = db.transaction('playlists', 'readwrite');
+    const store = tx.objectStore('playlists');
+    const req = store.openCursor();
+    req.onsuccess = (e) => {
+      const cursor = e.target.result;
+      if (cursor) {
+        if (playlistIds.has(cursor.value.id)) {
+          cursor.delete();
+        }
+        cursor.continue();
+      }
+    };
+    tx.oncomplete = () => resolve(true);
+    tx.onerror = () => resolve(false);
+  });
+
+  const normalizeDefaultPlaylists = async (profileName = activeProfile) => {
+    for (const playlistName of ["My Library", PLAYLIST_DEMOS, PLAYLIST_LIKED]) {
+      const matches = (await getProfilePlaylistsByName(playlistName, profileName)).sort((a, b) => a.id - b.id);
+      if (matches.length < 2) continue;
+
+      const keptPlaylist = matches[0];
+      const duplicateIds = new Set(matches.slice(1).map((row) => row.id));
+      await rewriteSongsToPlaylist(duplicateIds, keptPlaylist.id);
+      await deletePlaylistsByIds(duplicateIds);
+    }
+  };
+
+  const syncLibraryView = async ({ focusPlaylistId = null } = {}) => {
+    await loadPlaylists();
+    await refreshLikedSongsSet();
+
+    const hasFocusPlaylist = focusPlaylistId !== null && playlists.some((playlist) => playlist.id === focusPlaylistId);
+    const hasCurrentPlaylist = currentPlaylistId !== null && playlists.some((playlist) => playlist.id === currentPlaylistId);
+
+    if (hasFocusPlaylist) {
+      currentPlaylistId = focusPlaylistId;
+    } else if (!hasCurrentPlaylist) {
+      currentPlaylistId = getPreferredPlaylistId(playlists);
+    }
+
+    await renderPlaylists();
+    await loadSongsForCurrentPlaylist();
+    populatePlaylistSelect();
+  };
+
   const clearStore = (storeName) => new Promise((resolve) => {
     const tx = db.transaction(storeName, 'readwrite');
     tx.objectStore(storeName).clear();
@@ -1498,11 +1494,13 @@ window.addEventListener('DOMContentLoaded', () => {
     const playlistIds = new Set(playlistsRows.map((row) => row.id));
     const songsRows = (await getAllStoreRows('songs')).filter((row) => playlistIds.has(row.playlistId));
 
-    const serialisedSongs = await Promise.all(songsRows.map(async (song) => ({
-      ...song,
-      audioBlob: await blobToBase64(song.audioBlob),
-      imageBlob: song.imageBlob ? await blobToBase64(song.imageBlob) : null
-    })));
+    const serialisedSongs = songsRows.map((song) => ({
+      id: song.id,
+      name: song.name,
+      playlistId: song.playlistId,
+      originalSongId: song.originalSongId || null,
+      owner: song.owner || profileName
+    }));
 
     return {
       profile: profileName,
@@ -1526,43 +1524,8 @@ window.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => URL.revokeObjectURL(url), 1500);
   };
 
-  const downloadJsonFileWithBlobUrl = (jsonText, fileName) => {
-    const blob = new Blob([jsonText], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-
-    // First fallback: standard anchor download.
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = fileName;
-    link.style.display = 'none';
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-
-    // Second fallback: open JSON in a new tab so user can save manually.
-    let opened = false;
-    try {
-      const win = window.open(url, '_blank', 'noopener,noreferrer');
-      opened = !!win;
-    } catch (err) {
-      opened = false;
-    }
-
-    // Final fallback: force navigation to JSON in the same tab.
-    if (!opened) {
-      setTimeout(() => {
-        window.location.href = url;
-      }, 0);
-    }
-
-    setTimeout(() => URL.revokeObjectURL(url), opened ? 15000 : 3000);
-    return true;
-  };
-
   const saveJsonFile = async (dataObj, fileName) => {
-    const jsonText = JSON.stringify(dataObj, null, 2);
-    // Use deterministic download/open flow to avoid browser-specific picker failures.
-    downloadJsonFileWithBlobUrl(jsonText, fileName);
+    downloadJsonFile(dataObj, fileName);
     return true;
   };
 
@@ -1597,9 +1560,19 @@ window.addEventListener('DOMContentLoaded', () => {
     return saveJsonFile(backup, `musicmixer-backup-all-accounts-${timestamp}.json`);
   };
 
-  const wipeProfileLibraryData = async (profileName) => {
+  const wipeProfileLibraryData = async (profileName, options = {}) => {
+    const { preserveDemoPlaylist = false } = options;
     const profilePlaylists = (await getAllStoreRows('playlists')).filter((row) => isRowForProfile(row, profileName));
     const profilePlaylistIds = new Set(profilePlaylists.map((row) => row.id));
+    const protectedPlaylistIds = new Set();
+
+    if (preserveDemoPlaylist) {
+      profilePlaylists.forEach((playlist) => {
+        if (playlist.name === PLAYLIST_DEMOS) {
+          protectedPlaylistIds.add(playlist.id);
+        }
+      });
+    }
 
     await new Promise((resolve) => {
       const tx = db.transaction('songs', 'readwrite');
@@ -1607,7 +1580,10 @@ window.addEventListener('DOMContentLoaded', () => {
       req.onsuccess = (e) => {
         const cursor = e.target.result;
         if (cursor) {
-          if (profilePlaylistIds.has(cursor.value.playlistId)) {
+          if (
+            !protectedPlaylistIds.has(cursor.value.playlistId) &&
+            (profilePlaylistIds.has(cursor.value.playlistId) || isRowForProfile(cursor.value, profileName))
+          ) {
             cursor.delete();
           }
           cursor.continue();
@@ -1623,6 +1599,11 @@ window.addEventListener('DOMContentLoaded', () => {
       req.onsuccess = (e) => {
         const cursor = e.target.result;
         if (cursor) {
+          if (preserveDemoPlaylist && cursor.value.name === PLAYLIST_DEMOS && isRowForProfile(cursor.value, profileName)) {
+            cursor.continue();
+            return;
+          }
+
           if (isRowForProfile(cursor.value, profileName)) {
             cursor.delete();
           }
@@ -1640,7 +1621,7 @@ window.addEventListener('DOMContentLoaded', () => {
       throw new Error('Backup payload is missing playlists or songs.');
     }
 
-    await wipeProfileLibraryData(targetProfile);
+    await wipeProfileLibraryData(targetProfile, { preserveDemoPlaylist: true });
 
     const playlistMap = new Map();
     for (const playlist of payload.playlists) {
@@ -1650,10 +1631,10 @@ window.addEventListener('DOMContentLoaded', () => {
 
     const songIdMap = new Map();
     for (const song of payload.songs) {
-      const mappedPlaylistId = playlistMap.get(song.playlistId) || currentPlaylistId;
+      const mappedPlaylistId = playlistMap.get(song.playlistId) || playlistMap.values().next().value || currentPlaylistId;
       const createdSongId = await addToStore('songs', {
         name: song.name,
-        audioBlob: base64ToBlob(song.audioBlob),
+        audioBlob: song.audioBlob ? base64ToBlob(song.audioBlob) : createPlaceholderAudioBlob(),
         imageBlob: song.imageBlob ? base64ToBlob(song.imageBlob) : null,
         playlistId: mappedPlaylistId,
         owner: targetProfile,
@@ -1673,7 +1654,7 @@ window.addEventListener('DOMContentLoaded', () => {
     setPreferencesForProfile(targetProfile, nextPreferences);
 
     const remappedPlayCount = {};
-    if (payload.playCount && typeof payload.playCount === 'object') {
+    if (payload.playCount && typeof payload.playCount === 'object') { 
       Object.entries(payload.playCount).forEach(([oldId, plays]) => {
         const mappedId = songIdMap.get(String(oldId));
         if (mappedId !== undefined) {
@@ -1707,10 +1688,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
     await applyProfileBackupPayload(payload, targetProfile);
 
-    await loadPlaylists();
-    if (!currentPlaylistId && playlists.length) currentPlaylistId = playlists[0].id;
-    await loadSongsForCurrentPlaylist();
-    populatePlaylistSelect();
+    await normalizeDefaultPlaylists(targetProfile);
+    await syncLibraryView();
   };
 
   const importAllBackupsFromJson = async (rawText) => {
@@ -1721,12 +1700,14 @@ window.addEventListener('DOMContentLoaded', () => {
 
     const users = await getAllUsers();
     const userSet = new Set(users);
+    const importedProfiles = [];
     let importedCount = 0;
 
     for (const entry of parsed.profiles) {
       if (!entry || typeof entry !== 'object' || typeof entry.profile !== 'string') continue;
       if (!userSet.has(entry.profile)) continue;
       await applyProfileBackupPayload(entry, entry.profile);
+      importedProfiles.push(entry.profile);
       importedCount += 1;
     }
 
@@ -1734,48 +1715,15 @@ window.addEventListener('DOMContentLoaded', () => {
       throw new Error('No matching accounts found in this backup.');
     }
 
-    await loadPlaylists();
-    if (!currentPlaylistId && playlists.length) currentPlaylistId = playlists[0].id;
-    await loadSongsForCurrentPlaylist();
-    populatePlaylistSelect();
+    for (const profileName of importedProfiles) {
+      await normalizeDefaultPlaylists(profileName);
+    }
+    await syncLibraryView();
     return importedCount;
   };
 
   const resetCurrentData = async () => {
-    const profilePlaylists = (await getAllStoreRows('playlists')).filter((row) => isRowForActiveProfile(row));
-    const profilePlaylistIds = new Set(profilePlaylists.map((row) => row.id));
-
-    await new Promise((resolve) => {
-      const tx = db.transaction('songs', 'readwrite');
-      const req = tx.objectStore('songs').openCursor();
-      req.onsuccess = (e) => {
-        const cursor = e.target.result;
-        if (cursor) {
-          if (profilePlaylistIds.has(cursor.value.playlistId)) {
-            cursor.delete();
-          }
-          cursor.continue();
-        }
-      };
-      tx.oncomplete = () => resolve(true);
-      tx.onerror = () => resolve(false);
-    });
-
-    await new Promise((resolve) => {
-      const tx = db.transaction('playlists', 'readwrite');
-      const req = tx.objectStore('playlists').openCursor();
-      req.onsuccess = (e) => {
-        const cursor = e.target.result;
-        if (cursor) {
-          if (isRowForActiveProfile(cursor.value)) {
-            cursor.delete();
-          }
-          cursor.continue();
-        }
-      };
-      tx.oncomplete = () => resolve(true);
-      tx.onerror = () => resolve(false);
-    });
+    await wipeProfileLibraryData(activeProfile, { preserveDemoPlaylist: true });
 
     playCount = {};
     savePlayCount();
@@ -1789,10 +1737,8 @@ window.addEventListener('DOMContentLoaded', () => {
     syncPreferenceUI();
     await ensureDefaultPlaylists();
     await preloadDemosIfEmpty();
-    await loadPlaylists();
-    currentPlaylistId = playlists.length ? playlists[0].id : null;
-    await loadSongsForCurrentPlaylist();
-    populatePlaylistSelect();
+    await normalizeDefaultPlaylists(activeProfile);
+    await syncLibraryView();
   };
 
   addSongBtn.addEventListener('click', () => {
@@ -1922,78 +1868,10 @@ window.addEventListener('DOMContentLoaded', () => {
 
   on(exportBackupBtn, 'click', async () => {
     try {
-      showToast('Opening export options');
-      if (!isMasterSession) {
-        const saved = await exportFullBackupAsJson(activeProfile);
-        if (saved) showToast('Backup exported as JSON');
-        return;
-      }
-      await showExportConfirmModal();
-      showToast('Choose an export scope');
+      const saved = await exportFullBackupAsJson(activeProfile);
+      if (saved) showToast('Backup exported as JSON');
     } catch (err) {
       showToast('Failed to export backup');
-    }
-  });
-
-  if (exportScopeSelect) {
-    exportScopeSelect.addEventListener('change', () => {
-      if (!exportProfileRow) return;
-      exportProfileRow.classList.toggle(HIDDEN_CLASS, exportScopeSelect.value !== 'specific');
-    });
-  }
-
-  on(closeExportConfirmBtn, 'click', () => {
-    hideModal(exportConfirmPopup);
-  });
-  on(cancelExportBtn, 'click', () => {
-    hideModal(exportConfirmPopup);
-  });
-  bindOverlayClose(exportConfirmPopup, () => {
-    hideModal(exportConfirmPopup);
-  });
-
-  on(confirmExportBtn, async () => {
-    try {
-      if (!exportBackupState.ready) {
-        showToast('Preparing export data, please wait');
-        return;
-      }
-
-      let saved = false;
-      if (!isMasterSession) {
-        saved = await exportFullBackupAsJson(activeProfile);
-      } else if (exportScopeSelect && exportScopeSelect.value === 'all') {
-        const fileName = `musicmixer-backup-all-accounts-${exportBackupState.timestamp}.json`;
-        saved = await saveJsonFile(exportBackupState.allBackup, fileName);
-      } else if (exportScopeSelect && exportScopeSelect.value === 'specific') {
-        const username = (exportProfileSelect && exportProfileSelect.value ? exportProfileSelect.value : '').trim();
-        if (!username) {
-          showToast('Select an account first');
-          return;
-        }
-        const payload = exportBackupState.profileBackups.get(username);
-        if (!payload) {
-          showToast('Export data is not ready yet');
-          return;
-        }
-        const fileName = `musicmixer-backup-${username}-${exportBackupState.timestamp}.json`;
-        saved = await saveJsonFile({
-          app: 'MusicMixer',
-          schemaVersion: 1,
-          exportedAt: new Date().toISOString(),
-          ...payload
-        }, fileName);
-      }
-
-      if (!saved) {
-        showToast('Export cancelled');
-        return;
-      }
-
-      hideModal(exportConfirmPopup);
-      showToast('Backup exported as JSON');
-    } catch (err) {
-      showToast(err && err.message ? err.message : 'Failed to export backup');
     }
   });
 
@@ -2008,7 +1886,12 @@ window.addEventListener('DOMContentLoaded', () => {
     try {
       const rawText = await file.text();
       if (!isMasterSession) {
-        if (!confirm('Import backup and overwrite current account songs/playlists?')) {
+        const approved = await requestStyledConfirmation({
+          title: 'Import Backup',
+          message: 'Import backup and overwrite current account songs/playlists?',
+          confirmLabel: 'Import'
+        });
+        if (!approved) {
           return;
         }
         await importFullBackupFromJson(rawText, activeProfile);
@@ -2020,7 +1903,12 @@ window.addEventListener('DOMContentLoaded', () => {
       if (!mode) return;
 
       if (mode === '3') {
-        if (!confirm('Import and overwrite backup data for all matching accounts in this file?')) {
+        const approved = await requestStyledConfirmation({
+          title: 'Import Backup',
+          message: 'Import and overwrite backup data for all matching accounts in this file?',
+          confirmLabel: 'Import All'
+        });
+        if (!approved) {
           return;
         }
         const importedCount = await importAllBackupsFromJson(rawText);
@@ -2040,7 +1928,12 @@ window.addEventListener('DOMContentLoaded', () => {
         targetProfile = username;
       }
 
-      if (!confirm(`Import backup and overwrite songs/playlists for "${targetProfile}"?`)) {
+      const approved = await requestStyledConfirmation({
+        title: 'Import Backup',
+        message: `Import backup and overwrite songs/playlists for "${targetProfile}"?`,
+        confirmLabel: 'Import'
+      });
+      if (!approved) {
         return;
       }
 
@@ -2054,7 +1947,12 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 
   on(resetDataBtn, 'click', async () => {
-    if (!confirm('Reset app data for the current session?')) return;
+    const approved = await requestStyledConfirmation({
+      title: 'Reset Account Data',
+      message: 'Reset this account to factory presets? This removes custom playlists and songs for this account only.',
+      confirmLabel: 'Reset'
+    });
+    if (!approved) return;
     await resetCurrentData();
     showToast('App data reset');
   });
@@ -2096,7 +1994,12 @@ window.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    if (!confirm(`Delete account "${selectedProfile}"?`)) return;
+    const approved = await requestStyledConfirmation({
+      title: 'Delete Account',
+      message: `Delete account "${selectedProfile}"?`,
+      confirmLabel: 'Delete'
+    });
+    if (!approved) return;
 
     const wasDeleted = await deleteUserAccount(selectedProfile);
     if (!wasDeleted) {
@@ -2223,51 +2126,32 @@ window.addEventListener('DOMContentLoaded', () => {
 
   bindOverlayClose(deleteConfirmPopup, closeDeleteModal);
 
-  const closeImportModal = () => {
-    hideModal(importConfirmPopup);
-    pendingStatsImportEntries = null;
-  };
-
   if (cancelImportBtn) {
-    cancelImportBtn.addEventListener('click', closeImportModal);
+    cancelImportBtn.addEventListener('click', () => closeStyledConfirm(false));
   }
 
   if (closeImportConfirmBtn) {
-    closeImportConfirmBtn.addEventListener('click', closeImportModal);
+    closeImportConfirmBtn.addEventListener('click', () => closeStyledConfirm(false));
   }
 
-  bindOverlayClose(importConfirmPopup, closeImportModal);
+  bindOverlayClose(importConfirmPopup, () => closeStyledConfirm(false));
 
   if (confirmImportBtn) {
-    confirmImportBtn.addEventListener('click', async () => {
-      if (!pendingStatsImportEntries) {
-        closeImportModal();
-        return;
-      }
-
-      try {
-        const matchedCount = await applyImportedStats(pendingStatsImportEntries);
-        const snapshot = await buildStatsSnapshot();
-        renderStatsSnapshot(snapshot);
-        showToast(`Imported stats for ${matchedCount} song${matchedCount === 1 ? '' : 's'}`);
-      } catch (err) {
-        showToast(err && err.message ? err.message : 'Failed to import stats JSON');
-      } finally {
-        closeImportModal();
-      }
-    });
+    confirmImportBtn.addEventListener('click', () => closeStyledConfirm(true));
   }
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
+      if (importConfirmPopup && !importConfirmPopup.classList.contains(HIDDEN_CLASS)) {
+        closeStyledConfirm(false);
+      }
       [
         overlay,
         statsPopup,
         preferencesPopup,
         newPlaylistPopup,
         renamePlaylistPopup,
-        deleteConfirmPopup,
-        importConfirmPopup
+        deleteConfirmPopup
       ].forEach((modalEl) => hideModal(modalEl));
     }
 
