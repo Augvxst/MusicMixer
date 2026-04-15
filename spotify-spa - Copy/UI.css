@@ -370,20 +370,6 @@ body {
   font-weight: bold;
 }
 
-#statsBtn {
-  background: #a855f7;
-  color: #121212;
-  border: none;
-  border-radius: 6px;
-  padding: 8px 10px;
-  cursor: pointer;
-  width: 100%;
-}
-
-#statsBtn:hover {
-  filter: brightness(1.1);
-}
-
 .song {
   background: #282828;
   padding: 15px;
@@ -405,12 +391,12 @@ body {
 .song .heart-btn {
   background: none;
   border: none;
-  color: #ef4444;
+  color: #9ca3af;
   cursor: pointer;
-  font-size: 1.4em;
+  font-size: 1.2em;
   transition: all 0.2s;
   padding: 0 12px;
-  opacity: 0.75 !important;
+  opacity: 1 !important;
   margin-right: 8px;
   display: flex;
   align-items: center;
@@ -421,6 +407,10 @@ body {
 .song .heart-btn:hover {
   opacity: 1 !important;
   transform: scale(1.15);
+}
+
+.song .heart-btn.liked {
+  color: #22c55e;
 }
 
 .song .delete-btn {
@@ -636,6 +626,12 @@ body {
   align-items: center;
 }
 
+.playlist-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
 .playlist:hover {
   background: rgba(168, 85, 247, 0.3);
   color: #fff;
@@ -651,7 +647,7 @@ body {
   color: #fff !important;
 }
 
-#newPlaylistBtn, #openmenubtn, #statsBtn {
+#newPlaylistBtn, #openmenubtn, #statsBtn, #preferencesBtn {
   margin-top: 10px;
   width: 100%;
   background: #a855f7;
@@ -663,7 +659,7 @@ body {
   font-weight: bold;
 }
 
-#newPlaylistBtn:hover, #openmenubtn:hover, #statsBtn:hover {
+#newPlaylistBtn:hover, #openmenubtn:hover, #statsBtn:hover, #preferencesBtn:hover {
   filter: brightness(1.1);
 }
 
@@ -719,6 +715,10 @@ body {
   z-index: 1000;
   backdrop-filter: blur(4px);
   animation: fadeIn 0.2s ease;
+}
+
+#exportConfirmPopup {
+  z-index: 1101;
 }
 
 .modal-overlay.hidden {
@@ -825,6 +825,211 @@ body {
   box-sizing: border-box;
 }
 
+.preference-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border: 1px solid #333;
+  border-radius: 8px;
+  background: #252525;
+}
+
+.preference-item label {
+  margin: 0;
+  color: #e5e5e5;
+}
+
+.profile-status {
+  margin-top: 8px;
+  margin-bottom: 0;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.72);
+}
+
+body.light-mode .profile-status {
+  color: rgba(15, 23, 42, 0.72);
+}
+
+.preference-item input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: #a855f7;
+  cursor: pointer;
+}
+
+body.light-mode {
+  --light-accent: #60a5fa;
+  --light-accent-strong: #3b82f6;
+  --light-accent-soft: rgba(96, 165, 250, 0.18);
+  background: #f2f3f7;
+  color: #1f2937;
+}
+
+body.light-mode .leftbar,
+body.light-mode .user {
+  background: #ffffff;
+  color: #1f2937;
+  border: 1px solid #d6d9e0;
+}
+
+body.light-mode .search-bar,
+body.light-mode .song,
+body.light-mode .playlist,
+body.light-mode .queue-view,
+body.light-mode .queue-item,
+body.light-mode .stats,
+body.light-mode .modal-content,
+body.light-mode #statsContent > div,
+body.light-mode .form-group input[type="text"],
+body.light-mode .form-group select,
+body.light-mode .form-group input[type="file"],
+body.light-mode .preference-item,
+body.light-mode .btn,
+body.light-mode .toast {
+  background: #f8fafc;
+  color: #1f2937;
+  border-color: #d6d9e0;
+}
+
+body.light-mode .song:hover,
+body.light-mode .playlist:hover {
+  background: var(--light-accent-soft);
+  color: #1f2937;
+}
+
+body.light-mode .queue-item {
+  border-left-color: var(--light-accent);
+}
+
+body.light-mode .modal-header {
+  background: linear-gradient(135deg, #f4f6fb 0%, #eef1f7 100%);
+  border-bottom-color: #d6d9e0;
+}
+
+body.light-mode .modal-close {
+  color: #111827;
+}
+
+body.light-mode .search-bar::placeholder,
+body.light-mode .form-group label,
+body.light-mode .queue-view h3 {
+  color: #111827;
+}
+
+body.light-mode .progress-container,
+body.light-mode #currentTime,
+body.light-mode #duration {
+  color: #111827;
+}
+
+body.light-mode .buttons button {
+  color: #1f2937;
+}
+
+body.light-mode .buttons button:hover,
+body.light-mode .buttons button.active,
+body.light-mode .leftbar h1,
+body.light-mode .queue-view h3,
+body.light-mode .stat-item span,
+body.light-mode #statsContent strong,
+body.light-mode .modal-header h2 {
+  color: var(--light-accent-strong);
+}
+
+body.light-mode .playlist.active,
+body.light-mode .playlist.active:hover {
+  background: var(--light-accent) !important;
+  color: #fff !important;
+}
+
+body.light-mode #newPlaylistBtn,
+body.light-mode #openmenubtn,
+body.light-mode #statsBtn,
+body.light-mode #preferencesBtn {
+  background: var(--light-accent);
+  color: #0f172a;
+}
+
+body.light-mode .stats-action-btn {
+  background: var(--light-accent);
+  color: #0f172a;
+}
+
+body.light-mode .form-group input[type="text"]:focus,
+body.light-mode .form-group select:focus {
+  border-color: var(--light-accent);
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
+}
+
+body.light-mode .form-group input[type="file"]:hover {
+  border-color: var(--light-accent);
+}
+
+body.light-mode .btn-primary {
+  background: linear-gradient(135deg, #7dd3fc 0%, #60a5fa 100%);
+  box-shadow: 0 4px 12px rgba(96, 165, 250, 0.35);
+}
+
+body.light-mode .btn-primary:hover {
+  box-shadow: 0 6px 16px rgba(96, 165, 250, 0.45);
+}
+
+body.light-mode .preference-item input[type="checkbox"] {
+  accent-color: var(--light-accent-strong);
+}
+
+body.light-mode .main {
+  background: #f2f3f7;
+}
+
+body.light-mode #songListContainer,
+body.light-mode .playlist-list,
+body.light-mode #playlistList {
+  scrollbar-color: var(--light-accent) #e2e8f0;
+}
+
+body.light-mode #songListContainer::-webkit-scrollbar-track,
+body.light-mode .playlist-list::-webkit-scrollbar-track,
+body.light-mode #playlistList::-webkit-scrollbar-track {
+  background: #e2e8f0;
+}
+
+body.light-mode #songListContainer::-webkit-scrollbar-thumb,
+body.light-mode .playlist-list::-webkit-scrollbar-thumb,
+body.light-mode #playlistList::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #3b82f6, #60a5fa);
+  border-color: #e2e8f0;
+}
+
+body.light-mode #songListContainer::-webkit-scrollbar-thumb:hover,
+body.light-mode .playlist-list::-webkit-scrollbar-thumb:hover,
+body.light-mode #playlistList::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #60a5fa, #93c5fd);
+}
+
+body.light-mode .progress-bar,
+body.light-mode .volume-slider {
+  background: #cbd5e1;
+}
+
+body.light-mode .progress-bar::-webkit-slider-thumb,
+body.light-mode .volume-slider::-webkit-slider-thumb {
+  background: var(--light-accent-strong);
+}
+
+body.light-mode .progress-bar::-moz-range-thumb,
+body.light-mode .volume-slider::-moz-range-thumb {
+  background: var(--light-accent-strong);
+}
+
+body.light-mode .progress-bar::-moz-range-track,
+body.light-mode .volume-slider::-moz-range-track {
+  background: #cbd5e1;
+}
+
 .form-group input[type="text"]:focus,
 .form-group select:focus {
   outline: none;
@@ -928,6 +1133,77 @@ body {
   max-width: 400px;
 }
 
+.stats-footer {
+  margin-top: 16px;
+}
+
+.preferences-footer {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: initial;
+}
+
+.preferences-footer > button {
+  width: 100%;
+  height: 42px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 700px) {
+  .preferences-footer {
+    grid-template-columns: 1fr;
+  }
+}
+
+.preference-actions-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: nowrap;
+  margin-bottom: 8px;
+}
+
+.preference-actions-row select {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.profile-actions-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.profile-actions-grid button {
+  width: 100%;
+  font-size: 0.84em;
+  padding: 7px 8px;
+}
+
+.profile-basic-actions button {
+  width: 100%;
+}
+
+.stats-action-btn {
+  background: #a855f7;
+  color: #121212;
+  border: none;
+  border-radius: 6px;
+  padding: 10px 16px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.stats-action-btn:hover {
+  filter: brightness(1.1);
+}
+
 #statsContent {
   color: #e0e0e0;
 }
@@ -943,4 +1219,54 @@ body {
 #statsContent strong {
   color: #a855f7;
   margin-right: 8px;
+}
+
+.stats-most-played-item {
+  font-size: 0.9em;
+  color: #bbb;
+}
+
+.stats-section-title {
+  margin-top: 15px;
+}
+
+body.light-mode .stats-most-played-item {
+  color: #111827;
+}
+
+.confirm-message {
+  margin: 0 0 24px 0;
+  font-size: 1.05em;
+  line-height: 1.45;
+  color: #e0e0e0;
+}
+
+body.light-mode .confirm-message {
+  color: #111827;
+}
+
+#exportProfileRow {
+  margin-top: 16px;
+}
+
+#exportScopeSelect,
+#exportProfileSelect {
+  width: 100%;
+}
+
+#exportConfirmPopup .modal-content {
+  border-color: rgba(168, 85, 247, 0.35);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+}
+
+#exportConfirmPopup .modal-header {
+  background: linear-gradient(135deg, #2a1837 0%, #1e1e1e 100%);
+}
+
+body.light-mode #exportConfirmPopup .modal-content {
+  border-color: rgba(96, 165, 250, 0.45);
+}
+
+body.light-mode #exportConfirmPopup .modal-header {
+  background: linear-gradient(135deg, #eff6ff 0%, #f8fafc 100%);
 }

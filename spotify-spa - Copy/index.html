@@ -51,12 +51,9 @@
 
 <div class="leftbar">
   <h1>
-    <img src="assets/logo-removebg-preview.png" alt="logo" style="width:100px;height:100px;">
+    <img src="assets/logo-removebg-preview.png" alt="logo">
     <p>MusicMixer</p>
   </h1>
-  <ul>
-  </ul>
-
 
   <div class="playlist-list" id="playlistList"></div>
    
@@ -64,6 +61,7 @@
     <button id="newPlaylistBtn">+ New Playlist</button>
     <button id="openmenubtn">Upload</button>
      <button id="statsBtn">Stats</button>
+     <button id="preferencesBtn">Preferences</button>
   </div>
 </div>
 
@@ -76,6 +74,58 @@
     </div>
     <div class="modal-body">
       <div id="statsContent"></div>
+    </div>
+  </div>
+</div>
+
+<div id="preferencesPopup" class="modal-overlay hidden">
+  <div class="modal-content modal-small">
+    <div class="modal-header">
+      <h2>Preferences</h2> 
+      <button id="closePreferencesBtn" class="modal-close">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Theme</label>
+        <select id="themeSelect">
+          <option value="dark">Dark</option>
+          <option value="light">Light</option>
+        </select>
+      </div>
+
+      <div class="form-group preference-item">
+        <label for="autoplayToggle">Auto-play next song</label>
+        <input id="autoplayToggle" type="checkbox">
+      </div>
+
+      <div class="form-group preference-item">
+        <label for="confirmDeleteToggle">Confirm before deleting songs</label>
+        <input id="confirmDeleteToggle" type="checkbox">
+      </div>
+
+      <div id="profileSwitchGroup" class="form-group">
+        <label id="profileSwitchLabel">Profile Switch (Admin only)</label>
+        <p id="profileStatus" class="profile-status"></p>
+        <div id="profileSelectRow" class="preference-actions-row">
+          <select id="profileSelect"></select>
+        </div>
+        <div id="profileAdminActions" class="profile-actions-grid">
+          <button id="switchProfileBtn" class="btn-secondary" type="button">Switch</button>
+          <button id="logoutBtn" class="btn-secondary" type="button">Log out</button>
+          <button id="deleteAccountBtn" class="btn-secondary" type="button">Delete</button>
+          <button id="changePasswordBtn" class="btn-secondary" type="button">Change Password</button>
+        </div>
+        <div id="profileBasicActions" class="profile-basic-actions hidden">
+          <button id="switchAccountsBtn" class="btn-secondary" type="button">Switch accounts</button>
+        </div>
+      </div>
+
+      <div class="modal-footer preferences-footer">
+        <button id="exportBackupBtn" class="stats-action-btn" type="button">Export Backup</button>
+        <button id="importBackupBtn" class="stats-action-btn" type="button">Import Backup</button>
+        <button id="resetDataBtn" class="btn-delete" type="button">Reset Data</button>
+        <input id="importBackupInput" type="file" accept=".json,application/json" hidden>
+      </div>
     </div>
   </div>
 </div>
@@ -155,10 +205,53 @@
       <button type="button" id="closeDeleteConfirmBtn" class="modal-close">×</button>
     </div>
     <div class="modal-body">
-      <p style="margin: 0 0 24px 0; font-size: 1.1em; color: #e0e0e0;">Are you sure? This will delete the playlist and all its songs.</p>
+      <p class="confirm-message">Are you sure? This will delete the playlist and all its songs.</p>
       <div class="modal-footer">
         <button type="button" id="cancelDeleteBtn" class="btn-secondary">Cancel</button>
         <button type="button" id="confirmDeleteBtn" class="btn-delete">Delete</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="exportConfirmPopup" class="modal-overlay hidden">
+  <div class="modal-content modal-small">
+    <div class="modal-header">
+      <h2>Export Backup</h2>
+      <button type="button" id="closeExportConfirmBtn" class="modal-close">×</button>
+    </div>
+    <div class="modal-body">
+      <p class="confirm-message">Choose which account data you want to export.</p>
+      <div class="form-group">
+        <label for="exportScopeSelect">Export scope</label>
+        <select id="exportScopeSelect">
+          <option value="all">All accounts</option>
+          <option value="specific">Specific account</option>
+        </select>
+      </div>
+      <div id="exportProfileRow" class="form-group hidden">
+        <label for="exportProfileSelect">Account</label>
+        <select id="exportProfileSelect"></select>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="cancelExportBtn" class="btn-secondary">Cancel</button>
+        <button type="button" id="confirmExportBtn" class="btn-primary">Export</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="importConfirmPopup" class="modal-overlay hidden">
+  <div class="modal-content modal-small">
+    <div class="modal-header">
+      <h2>Import Stats</h2>
+      <button type="button" id="closeImportConfirmBtn" class="modal-close">×</button>
+    </div>
+    <div class="modal-body">
+      <p id="importConfirmMessage" class="confirm-message">Importing stats will overwrite play counts for matched songs.</p>
+      <div class="modal-footer">
+        <button type="button" id="cancelImportBtn" class="btn-secondary">Cancel</button>
+        <button type="button" id="confirmImportBtn" class="btn-primary">Import</button>
       </div>
     </div>
   </div>
