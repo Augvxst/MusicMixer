@@ -1,27 +1,27 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-GB">   <!--Sets the website to english (United Kingdom)-->
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MusicMixer </title>
-  <link rel="stylesheet" href="UI.css" />
-  <link rel="icon" href="assets/logo.jpg" type="image/png">
+  <title>MusicMixer </title> <!--Sets the title of the website-->
+  <link rel="stylesheet" href="UI.css" /> <!--Links the CSS file to the HTML file-->
+  <link rel="icon" href="assets/logo.jpg" type="image/png"> <!--Sets the icon of the website-->
 </head>
 <body>
-<div id="loadingScreen" class="loading-screen">
+<div id="loadingScreen" class="loading-screen"> <!-- Loading screen -->
   <div class="loading-content">
-    <img src="assets/logo-removebg-preview.png" alt="MusicMixer Logo" class="loading-logo">
+    <img src="assets/logo-removebg-preview.png" alt="MusicMixer Logo" class="loading-logo"> <!-- image for the loading screen -->
     <h1 class="loading-title">MusicMixer</h1>
     <p class="loading-subtitle">Made by Augvxst</p>
-    <div class="loading-spinner"></div>
-    
-    <div id="loginForm" class="login-form hidden">
+    <div class="loading-spinner"></div> <!-- cicrles loading spinner-->
+
+    <div id="loginForm" class="login-form hidden">  <!-- Login/signup -->
       <div class="auth-tabs">
         <button id="loginTab" class="auth-tab active">Log in</button>
         <button id="signupTab" class="auth-tab">Sign up</button>
       </div>
       
-      <div id="loginPanel" class="auth-panel">
+      <div id="loginPanel" class="auth-panel">  <!-- Login input -->
         <div class="input-group">
           <input type="text" id="loginUsername" placeholder="Username" autocomplete="username">
         </div>
@@ -31,8 +31,8 @@
         <div id="loginError" class="error-message"></div>
         <button id="loginBtn" class="auth-btn">Log in</button>
       </div>
-      
-      <div id="signupPanel" class="auth-panel hidden">
+
+      <div id="signupPanel" class="auth-panel hidden">  <!-- Signup input -->
         <div class="input-group">
           <input type="text" id="signupUsername" placeholder="Username" autocomplete="username">
         </div>
@@ -49,24 +49,23 @@
   </div>
 </div>
 
-<div class="leftbar">
+<div class="leftbar"> <!-- Left sidebar -->
   <h1>
-    <img src="assets/logo-removebg-preview.png" alt="logo">
+    <img src="assets/logo-removebg-preview.png" alt="logo"> <!-- Logo image -->
     <p>MusicMixer</p>
   </h1>
 
-  <div class="playlist-list" id="playlistList"></div>
-   
-  <div class="sidebar-buttons">
+  <div class="playlist-list" id="playlistList"></div> <!-- Playlist list -->
+
+  <div class="sidebar-buttons"> <!-- Buttons on the bottom of the left bar -->
     <button id="newPlaylistBtn">+ New Playlist</button>
     <button id="openmenubtn">Upload</button>
-     <button id="statsBtn">Stats</button>
-     <button id="preferencesBtn">Preferences</button>
+    <button id="statsBtn">Stats</button>
+    <button id="preferencesBtn">Preferences</button>
   </div>
 </div>
 
-
-<div id="statspopup" class="modal-overlay hidden">
+<div id="statspopup" class="modal-overlay hidden"> <!-- stats page-->
   <div class="modal-content">
     <div class="modal-header">
       <h2>Your Stats</h2>
@@ -78,49 +77,49 @@
   </div>
 </div>
 
-<div id="preferencesPopup" class="modal-overlay hidden">
+<div id="preferencesPopup" class="modal-overlay hidden"> <!-- preferences page-->
   <div class="modal-content modal-small">
     <div class="modal-header">
-      <h2>Preferences</h2> 
+      <h2>Preferences</h2>
       <button id="closePreferencesBtn" class="modal-close">×</button>
     </div>
     <div class="modal-body">
       <div class="form-group">
         <label>Theme</label>
-        <select id="themeSelect">
+        <select id="themeSelect"> <!-- dark and light mode selector-->
           <option value="dark">Dark</option>
           <option value="light">Light</option>
         </select>
       </div>
 
-      <div class="form-group preference-item">
+      <div class="form-group preference-item"> <!--Auto play option-->
         <label for="autoplayToggle">Auto-play next song</label>
         <input id="autoplayToggle" type="checkbox">
       </div>
 
-      <div class="form-group preference-item">
+      <div class="form-group preference-item"> <!--Delete confirmation option-->
         <label for="confirmDeleteToggle">Confirm before deleting songs</label>
         <input id="confirmDeleteToggle" type="checkbox">
       </div>
 
-      <div id="profileSwitchGroup" class="form-group">
+      <div id="profileSwitchGroup" class="form-group"> <!--Profile Switch - Admin panel -->
         <label id="profileSwitchLabel">Profile Switch (Admin only)</label>
         <p id="profileStatus" class="profile-status"></p>
         <div id="profileSelectRow" class="preference-actions-row">
           <select id="profileSelect"></select>
         </div>
-        <div id="profileAdminActions" class="profile-actions-grid">
+        <div id="profileAdminActions" class="profile-actions-grid"> <!--Admin options-->
           <button id="switchProfileBtn" class="btn-secondary" type="button">Switch</button>
           <button id="logoutBtn" class="btn-secondary" type="button">Log out</button>
           <button id="deleteAccountBtn" class="btn-secondary" type="button">Delete</button>
           <button id="changePasswordBtn" class="btn-secondary" type="button">Change Password</button>
         </div>
-        <div id="profileBasicActions" class="profile-basic-actions hidden">
+        <div id="profileBasicActions" class="profile-basic-actions hidden"> <!--Account switch, Default user action-->
           <button id="switchAccountsBtn" class="btn-secondary" type="button">Switch accounts</button>
         </div>
       </div>
 
-      <div class="modal-footer preferences-footer">
+      <div class="modal-footer preferences-footer"> <!-- JSON and DB reset-->
         <button id="exportBackupBtn" class="stats-action-btn" type="button">Export Backup</button>
         <button id="importBackupBtn" class="stats-action-btn" type="button">Import Backup</button>
         <button id="resetDataBtn" class="btn-delete" type="button">Reset Data</button>
@@ -130,13 +129,13 @@
   </div>
 </div>
 
-<div id="uploadpopup" class="modal-overlay hidden">
+<div id="uploadpopup" class="modal-overlay hidden"> <!-- Upload page -->
   <div class="modal-content">
     <div class="modal-header">
       <h2>Upload Your Song</h2>
       <button id="closemenubtn" class="modal-close">×</button>
     </div>
-    <div class="modal-body">
+    <div class="modal-body"> <!-- Upload options -->
       <div class="form-group">
         <label>Song Name</label>
         <input id="songNameInput" type="text" placeholder="Enter song name">
@@ -160,7 +159,7 @@
   </div>
 </div>
 
-<div id="newPlaylistPopup" class="modal-overlay hidden">
+<div id="newPlaylistPopup" class="modal-overlay hidden"> <!-- Create new playlist page -->
   <div class="modal-content modal-small">
     <div class="modal-header">
       <h2>Create New Playlist</h2>
@@ -179,7 +178,7 @@
   </div>
 </div>
 
-<div id="renamePlaylistPopup" class="modal-overlay hidden">
+<div id="renamePlaylistPopup" class="modal-overlay hidden"> <!-- Rename playlist page -->
   <div class="modal-content modal-small">
     <div class="modal-header">
       <h2>Rename Playlist</h2>
@@ -198,7 +197,7 @@
   </div>
 </div>
 
-<div id="deleteConfirmPopup" class="modal-overlay hidden">
+<div id="deleteConfirmPopup" class="modal-overlay hidden"> <!-- Delete confirmation page -->
   <div class="modal-content modal-small">
     <div class="modal-header">
       <h2>Delete Playlist</h2>
@@ -214,7 +213,7 @@
   </div>
 </div>
 
-<div id="importConfirmPopup" class="modal-overlay hidden">
+<div id="importConfirmPopup" class="modal-overlay hidden"> <!-- Import confirmation page -->
   <div class="modal-content modal-small">
     <div class="modal-header">
       <h2 id="importConfirmTitle">Confirm Action</h2>
@@ -230,42 +229,43 @@
   </div>
 </div>
 
-<div id="toast" class="toast"></div>
+<div id="toast" class="toast"></div> <!-- push notifications -->
 
-  <div class="main">
-    <div class="song-list">
-      <input type="text" id="searchInput" placeholder="Search songs..." class="search-bar">
-      <div id="songListContainer"></div>
+<div class="main"> <!-- Middle area -->
+  <div class="song-list">
+    <input type="text" id="searchInput" placeholder="Search songs..." class="search-bar">
+    <div id="songListContainer"></div>
+  </div>
+
+  <div class="user"> <!-- Right sidebar, Player-->
+    <img src="album.jpg" alt="Album Art" class="user-photo" />
+    <h2 id="title">Choose a Song</h2>
+    <audio id="audio"></audio>
+    <div class="player-controls">
+      <div class="progress-container">
+        <span id="currentTime">0:00</span>
+        <input type="range" id="progressBar" class="progress-bar" min="0" max="100" value="0">
+        <span id="duration">0:00</span>
+      </div>
+      <div class="volume-container">
+        <label>🔊</label>
+        <input type="range" id="volumeSlider" class="volume-slider" min="0" max="100" value="70">
+      </div>
     </div>
-
-    <div class="user">
-      <img src="album.jpg" alt="Album Art" class="user-photo" />
-      <h2 id="title">Choose a Song</h2>
-      <audio id="audio"></audio>
-      <div class="player-controls">
-        <div class="progress-container">
-          <span id="currentTime">0:00</span>
-          <input type="range" id="progressBar" class="progress-bar" min="0" max="100" value="0">
-          <span id="duration">0:00</span>
-        </div>
-        <div class="volume-container">
-          <label>🔊</label>
-          <input type="range" id="volumeSlider" class="volume-slider" min="0" max="100" value="70">
-        </div>
-      </div>
-      <div class="buttons">
-        <button id="prev">⏮</button>
-        <button id="play">▶</button>
-        <button id="pause">||</button>
-        <button id="next">⏭</button>
-      </div>
-      <div id="queueView" class="queue-view">
-        <h3>Next Up</h3>
-        <div id="queueList"></div>
-      </div>
+    <div class="buttons"> <!-- music controls-->
+      <button id="prev">⏮</button>
+      <button id="play">▶</button>
+      <button id="pause">||</button>
+      <button id="next">⏭</button>
+    </div>
+    <div id="queueView" class="queue-view">
+      <h3>Next Up</h3>
+      <div id="queueList"></div>
     </div>
   </div>
 
-  <script src="script.js"></script>
+</div>
+
+<script src="script.js"></script> <!-- Links the js file to the HTML file -->
 </body>
 </html>

@@ -1,201 +1,113 @@
 window.addEventListener('DOMContentLoaded', () => {
-  const byId = (id) => document.getElementById(id);
+  const getEl = (id) => document.getElementById(id);
 
-  const elements = {
-    player: {
-      audio: byId('audio'),
-      songTitle: byId('title'),
-      albumArt: document.querySelector('.user-photo'),
-      playButton: byId('play'),
-      pauseButton: byId('pause'),
-      prevButton: byId('prev'),
-      nextButton: byId('next'),
-      progressBar: byId('progressBar'),
-      currentTimeEl: byId('currentTime'),
-      durationEl: byId('duration'),
-      volumeSlider: byId('volumeSlider'),
-      queueList: byId('queueList')
-    },
-    library: {
-      songListContainer: byId('songListContainer'),
-      searchInput: byId('searchInput'),
-      playlistList: byId('playlistList'),
-      newPlaylistBtn: byId('newPlaylistBtn'),
-      playlistSelect: byId('playlistSelect')
-    },
-    upload: {
-      overlay: byId('uploadpopup'),
-      closeBtn: byId('closemenubtn'),
-      openMenuBtn: byId('openmenubtn'),
-      addSongBtn: byId('addSongBtn')
-    },
-    stats: {
-      statsBtn: byId('statsBtn'),
-      statsPopup: byId('statspopup'),
-      closeStatsBtn: byId('closestatsbtn'),
-      statsContent: byId('statsContent')
-    },
-    preferences: {
-      preferencesBtn: byId('preferencesBtn'),
-      preferencesPopup: byId('preferencesPopup'),
-      closePreferencesBtn: byId('closePreferencesBtn'),
-      themeSelect: byId('themeSelect'),
-      autoplayToggle: byId('autoplayToggle'),
-      confirmDeleteToggle: byId('confirmDeleteToggle'),
-      profileSwitchGroup: byId('profileSwitchGroup'),
-      profileSwitchLabel: byId('profileSwitchLabel'),
-      profileSelectRow: byId('profileSelectRow'),
-      profileAdminActions: byId('profileAdminActions'),
-      profileBasicActions: byId('profileBasicActions'),
-      profileStatus: byId('profileStatus'),
-      profileSelect: byId('profileSelect'),
-      switchProfileBtn: byId('switchProfileBtn'),
-      logoutBtn: byId('logoutBtn'),
-      deleteAccountBtn: byId('deleteAccountBtn'),
-      changePasswordBtn: byId('changePasswordBtn'),
-      switchAccountsBtn: byId('switchAccountsBtn'),
-      exportBackupBtn: byId('exportBackupBtn'),
-      importBackupBtn: byId('importBackupBtn'),
-      importBackupInput: byId('importBackupInput'),
-      resetDataBtn: byId('resetDataBtn')
-    },
-    playlists: {
-      newPlaylistPopup: byId('newPlaylistPopup'),
-      newPlaylistInput: byId('newPlaylistInput'),
-      createPlaylistBtn: byId('createPlaylistBtn'),
-      cancelNewPlaylistBtn: byId('cancelNewPlaylistBtn'),
-      closeNewPlaylistBtn: byId('closeNewPlaylistBtn'),
-      renamePlaylistPopup: byId('renamePlaylistPopup'),
-      renamePlaylistInput: byId('renamePlaylistInput'),
-      saveRenamePlaylistBtn: byId('saveRenamePlaylistBtn'),
-      cancelRenamePlaylistBtn: byId('cancelRenamePlaylistBtn'),
-      closeRenamePlaylistBtn: byId('closeRenamePlaylistBtn')
-    },
-    confirmations: {
-      deleteConfirmPopup: byId('deleteConfirmPopup'),
-      closeDeleteConfirmBtn: byId('closeDeleteConfirmBtn'),
-      cancelDeleteBtn: byId('cancelDeleteBtn'),
-      confirmDeleteBtn: byId('confirmDeleteBtn'),
-      importConfirmTitle: byId('importConfirmTitle'),
-      importConfirmPopup: byId('importConfirmPopup'),
-      importConfirmMessage: byId('importConfirmMessage'),
-      closeImportConfirmBtn: byId('closeImportConfirmBtn'),
-      cancelImportBtn: byId('cancelImportBtn'),
-      confirmImportBtn: byId('confirmImportBtn')
-    },
-    shared: {
-      toastEl: byId('toast')
-    }
-  };
+  // Player options
+  const audio = getEl('audio');
+  const songTitle = getEl('title');
+  const albumArt = document.querySelector('.user-photo');
+  const playButton = getEl('play');
+  const pauseButton = getEl('pause');
+  const prevButton = getEl('prev');
+  const nextButton = getEl('next');
+  const progressBar = getEl('progressBar');
+  const currentTimeEl = getEl('currentTime');
+  const durationEl = getEl('duration');
+  const volumeSlider = getEl('volumeSlider');
+  const queueList = getEl('queueList');
 
-  const {
-    player: {
-      audio,
-      songTitle,
-      albumArt,
-      playButton,
-      pauseButton,
-      prevButton,
-      nextButton,
-      progressBar,
-      currentTimeEl,
-      durationEl,
-      volumeSlider,
-      queueList
-    },
-    library: {
-      songListContainer,
-      searchInput,
-      playlistList,
-      newPlaylistBtn,
-      playlistSelect
-    },
-    upload: {
-      overlay,
-      closeBtn,
-      openMenuBtn,
-      addSongBtn
-    },
-    stats: {
-      statsBtn,
-      statsPopup,
-      closeStatsBtn,
-      statsContent
-    },
-    preferences: {
-      preferencesBtn,
-      preferencesPopup,
-      closePreferencesBtn,
-      themeSelect,
-      autoplayToggle,
-      confirmDeleteToggle,
-      profileSwitchGroup,
-      profileSwitchLabel,
-      profileSelectRow,
-      profileAdminActions,
-      profileBasicActions,
-      profileStatus,
-      profileSelect,
-      switchProfileBtn,
-      logoutBtn,
-      deleteAccountBtn,
-      changePasswordBtn,
-      switchAccountsBtn,
-      exportBackupBtn,
-      importBackupBtn,
-      importBackupInput,
-      resetDataBtn
-    },
-    playlists: {
-      newPlaylistPopup,
-      newPlaylistInput,
-      createPlaylistBtn,
-      cancelNewPlaylistBtn,
-      closeNewPlaylistBtn,
-      renamePlaylistPopup,
-      renamePlaylistInput,
-      saveRenamePlaylistBtn,
-      cancelRenamePlaylistBtn,
-      closeRenamePlaylistBtn
-    },
-    confirmations: {
-      deleteConfirmPopup,
-      closeDeleteConfirmBtn,
-      cancelDeleteBtn,
-      confirmDeleteBtn,
-      importConfirmTitle,
-      importConfirmPopup,
-      importConfirmMessage,
-      closeImportConfirmBtn,
-      cancelImportBtn,
-      confirmImportBtn
-    },
-    shared: { toastEl }
-  } = elements;
+  // Library 
+  const songListContainer = getEl('songListContainer');
+  const searchInput = getEl('searchInput');
+  const playlistList = getEl('playlistList');
+  const newPlaylistBtn = getEl('newPlaylistBtn');
+  const playlistSelect = getEl('playlistSelect');
 
+  // Upload Audio
+  const uploadModal = getEl('uploadpopup');
+  const closeUploadBtn = getEl('closemenubtn');
+  const openUploadBtn = getEl('openmenubtn');
+  const addSongBtn = getEl('addSongBtn');
+
+  // Stat Page
+  const statsBtn = getEl('statsBtn');
+  const statsModal = getEl('statspopup');
+  const closeStatsBtn = getEl('closestatsbtn');
+  const statsContent = getEl('statsContent');
+
+  // Preferences options
+  const preferencesBtn = getEl('preferencesBtn');
+  const preferencesPopup = getEl('preferencesPopup');
+  const closePreferencesBtn = getEl('closePreferencesBtn');
+  const themeSelect = getEl('themeSelect');
+  const autoplayToggle = getEl('autoplayToggle');
+  const confirmDeleteToggle = getEl('confirmDeleteToggle');
+  const profileSwitchGroup = getEl('profileSwitchGroup');
+  const profileSwitchLabel = getEl('profileSwitchLabel');
+  const profileSelectRow = getEl('profileSelectRow');
+  const profileAdminActions = getEl('profileAdminActions');
+  const profileBasicActions = getEl('profileBasicActions');
+  const profileStatus = getEl('profileStatus');
+  const profileSelect = getEl('profileSelect');
+  const switchProfileBtn = getEl('switchProfileBtn');
+  const logoutBtn = getEl('logoutBtn');
+  const deleteAccountBtn = getEl('deleteAccountBtn');
+  const changePasswordBtn = getEl('changePasswordBtn');
+  const switchAccountsBtn = getEl('switchAccountsBtn');
+  const exportBackupBtn = getEl('exportBackupBtn');
+  const importBackupBtn = getEl('importBackupBtn');
+  const importBackupInput = getEl('importBackupInput');
+  const resetDataBtn = getEl('resetDataBtn');
+
+  // Playlist controls
+  const newPlaylistPopup = getEl('newPlaylistPopup');
+  const newPlaylistInput = getEl('newPlaylistInput');
+  const createPlaylistBtn = getEl('createPlaylistBtn');
+  const cancelNewPlaylistBtn = getEl('cancelNewPlaylistBtn');
+  const closeNewPlaylistBtn = getEl('closeNewPlaylistBtn');
+  const renamePlaylistPopup = getEl('renamePlaylistPopup');
+  const renamePlaylistInput = getEl('renamePlaylistInput');
+  const saveRenamePlaylistBtn = getEl('saveRenamePlaylistBtn');
+  const cancelRenamePlaylistBtn = getEl('cancelRenamePlaylistBtn');
+  const closeRenamePlaylistBtn = getEl('closeRenamePlaylistBtn');
+
+  // Confirm popups
+  const deleteConfirmPopup = getEl('deleteConfirmPopup');
+  const closeDeleteConfirmBtn = getEl('closeDeleteConfirmBtn');
+  const cancelDeleteBtn = getEl('cancelDeleteBtn');
+  const confirmDeleteBtn = getEl('confirmDeleteBtn');
+  const importConfirmTitle = getEl('importConfirmTitle');
+  const importConfirmPopup = getEl('importConfirmPopup');
+  const importConfirmMessage = getEl('importConfirmMessage');
+  const closeImportConfirmBtn = getEl('closeImportConfirmBtn');
+  const cancelImportBtn = getEl('cancelImportBtn');
+  const confirmImportBtn = getEl('confirmImportBtn');
+
+  const toastEl = getEl('toast');
+
+  // constants
   const DB_NAME = 'SpotifyCloneDB';
   const DB_VERSION = 3;
-  const HIDDEN_CLASS = 'hidden';
+  const hiddenClass = 'hidden';
   const PLAYLIST_LIKED = 'Liked Songs';
   const PLAYLIST_DEMOS = 'Demos';
   const ADMIN_ACCOUNT_NAME = 'admin';
   const PLAYCOUNT_STORAGE_PREFIX = 'musicmixer_playcount_';
 
-  const on = (el, event, handler) => {
+  const onEvent = (el, event, handler) => {
     if (el) el.addEventListener(event, handler);
   };
 
   const showModal = (el) => {
-    if (el) el.classList.remove(HIDDEN_CLASS);
+    if (el) el.classList.remove(hiddenClass);
   };
 
   const hideModal = (el) => {
-    if (el) el.classList.add(HIDDEN_CLASS);
+    if (el) el.classList.add(hiddenClass);
   };
 
-  const bindOverlayClose = (overlayEl, closeFn) => {
+  const closeOnBackdropClick = (overlayEl, closeFn) => {
     if (!overlayEl) return;
-    on(overlayEl, 'click', (e) => {
+    onEvent(overlayEl, 'click', (e) => {
       if (e.target === overlayEl) closeFn();
     });
   };
@@ -206,14 +118,14 @@ window.addEventListener('DOMContentLoaded', () => {
     return demoPlaylist ? demoPlaylist.id : playlistRows[0].id;
   };
 
-  const closeStyledConfirm = (result = false) => {
+  const closeConfirmDialog = (result = false) => {
     hideModal(importConfirmPopup);
     const resolver = pendingConfirmResolve;
     pendingConfirmResolve = null;
     if (resolver) resolver(result);
   };
 
-  const requestStyledConfirmation = ({ title, message, confirmLabel = 'Confirm' }) => new Promise((resolve) => {
+  const askConfirm = ({ title, message, confirmLabel = 'Confirm' }) => new Promise((resolve) => {
     if (!importConfirmPopup || !importConfirmMessage || !confirmImportBtn || !importConfirmTitle) {
       resolve(confirm(message));
       return;
@@ -265,7 +177,7 @@ window.addEventListener('DOMContentLoaded', () => {
   request.onsuccess = async (e) => {
     try {
       db = e.target.result;
-      await ensureUsersStore();
+      await ensureUsersDB();
       await ensureAdminAccount();
 
       setTimeout(() => {
@@ -281,7 +193,7 @@ window.addEventListener('DOMContentLoaded', () => {
     hideLoadingScreen();
   };
 
-  const ensureUsersStore = () => new Promise((resolve, reject) => {
+  const ensureUsersDB = () => new Promise((resolve, reject) => {
     if (!db) return resolve();
     if (db.objectStoreNames.contains("users")) return resolve();
 
@@ -333,10 +245,10 @@ window.addEventListener('DOMContentLoaded', () => {
     loadPlayCount();
     applyTheme(preferences.theme);
     await ensureDefaultPlaylists();
-    await preloadDemosIfEmpty();
-    await normalizeDefaultPlaylists(activeProfile);
-    await syncLibraryView();
-    await syncProfileSwitchUI();
+    await loadDemos();
+    await mergeDuplicates(activeProfile);
+    await refreshLibrary();
+    await refreshProfileUI();
     hideLoadingScreen();
   }
 
@@ -364,13 +276,13 @@ window.addEventListener('DOMContentLoaded', () => {
       return { success: false, message: "Username and password required" };
     }
 
-    await ensureUsersStore();
+    await ensureUsersDB();
 
     const existingUser = await getUser(username);
     if (existingUser) {
       return { success: false, message: "Username already exists" };
     }
-    const createdId = await addToStore("users", { username, password });
+    const createdId = await addRow("users", { username, password });
     if (!createdId) {
       return { success: false, message: "Failed to create account" };
     }
@@ -382,7 +294,7 @@ window.addEventListener('DOMContentLoaded', () => {
       return { success: false, message: "Username and password required" };
     }
 
-    await ensureUsersStore();
+    await ensureUsersDB();
     
     const user = await getUser(username);
     if (!user) {
@@ -410,7 +322,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const ensureAdminAccount = async () => {
     const existing = await getUser(ADMIN_ACCOUNT_NAME);
     if (existing) return;
-    await addToStore('users', { username: ADMIN_ACCOUNT_NAME, password: ADMIN_ACCOUNT_NAME });
+    await addRow('users', { username: ADMIN_ACCOUNT_NAME, password: ADMIN_ACCOUNT_NAME });
   };
 
   const loginTab = document.getElementById('loginTab');
@@ -526,7 +438,7 @@ window.addEventListener('DOMContentLoaded', () => {
         ...parsed
       };
     } catch (err) {
-      // Ignore malformed local preference data and keep defaults.
+
     }
   }
 
@@ -534,13 +446,13 @@ window.addEventListener('DOMContentLoaded', () => {
     localStorage.setItem(`musicmixer_preferences_${activeProfile}`, JSON.stringify(preferences));
   }
 
-  function getPlayCountStorageKey() {
+  function getPlayCountKey() {
     return `${PLAYCOUNT_STORAGE_PREFIX}${activeProfile}`;
   }
 
   function loadPlayCount() {
     try {
-      const raw = localStorage.getItem(getPlayCountStorageKey());
+      const raw = localStorage.getItem(getPlayCountKey());
       playCount = raw ? JSON.parse(raw) : {};
     } catch (err) {
       playCount = {};
@@ -548,7 +460,7 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   function savePlayCount() {
-    localStorage.setItem(getPlayCountStorageKey(), JSON.stringify(playCount));
+    localStorage.setItem(getPlayCountKey(), JSON.stringify(playCount));
   }
 
   const getRowOwner = (row) => {
@@ -562,7 +474,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const isRowForProfile = (row, profileName) => getRowOwner(row) === profileName;
   const isRowForActiveProfile = (row) => getRowOwner(row) === activeProfile;
 
-  const getPreferencesForProfile = (profileName) => {
+  const getPrefs = (profileName) => {
     try {
       const raw = localStorage.getItem(`musicmixer_preferences_${profileName}`);
       if (!raw) return { theme: 'dark', autoPlayNext: true, confirmDelete: true };
@@ -578,11 +490,11 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  const setPreferencesForProfile = (profileName, nextPreferences) => {
+  const setPrefs = (profileName, nextPreferences) => {
     localStorage.setItem(`musicmixer_preferences_${profileName}`, JSON.stringify(nextPreferences));
   };
 
-  const getPlayCountForProfile = (profileName) => {
+  const getPlayCount = (profileName) => {
     try {
       const raw = localStorage.getItem(`${PLAYCOUNT_STORAGE_PREFIX}${profileName}`);
       return raw ? JSON.parse(raw) : {};
@@ -591,7 +503,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  const setPlayCountForProfile = (profileName, nextPlayCount) => {
+  const setPlayCount = (profileName, nextPlayCount) => {
     localStorage.setItem(`${PLAYCOUNT_STORAGE_PREFIX}${profileName}`, JSON.stringify(nextPlayCount));
   };
 
@@ -613,7 +525,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  function syncProfileActionButtons() {
+  function updateProfileButtons() {
     if (!profileSelect || !switchProfileBtn || !deleteAccountBtn || !changePasswordBtn) return;
     const selectedProfile = (profileSelect.value || '').trim().toLowerCase();
     const canManage = isMasterSession;
@@ -633,7 +545,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  async function updateUserPassword(username, newPassword) {
+  async function changePassword(username, newPassword) {
     if (!db || !username || !newPassword) return false;
     const existing = await getUser(username);
     if (!existing) return false;
@@ -647,7 +559,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  async function syncProfileSwitchUI() {
+  async function refreshProfileUI() {
     if (!profileSwitchGroup || !profileSelect || !switchProfileBtn || !profileStatus) return;
 
     const users = await getAllUsers();
@@ -667,15 +579,15 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     profileSelect.value = activeProfile;
-    profileSwitchGroup.classList.remove(HIDDEN_CLASS);
+    profileSwitchGroup.classList.remove(hiddenClass);
     const isAdminSession = !!isMasterSession;
-    if (profileSwitchLabel) profileSwitchLabel.classList.toggle(HIDDEN_CLASS, !isAdminSession);
-    profileStatus.classList.toggle(HIDDEN_CLASS, !isAdminSession);
-    if (profileSelectRow) profileSelectRow.classList.toggle(HIDDEN_CLASS, !isAdminSession);
-    if (profileAdminActions) profileAdminActions.classList.toggle(HIDDEN_CLASS, !isAdminSession);
-    if (profileBasicActions) profileBasicActions.classList.toggle(HIDDEN_CLASS, isAdminSession);
+    if (profileSwitchLabel) profileSwitchLabel.classList.toggle(hiddenClass, !isAdminSession);
+    profileStatus.classList.toggle(hiddenClass, !isAdminSession);
+    if (profileSelectRow) profileSelectRow.classList.toggle(hiddenClass, !isAdminSession);
+    if (profileAdminActions) profileAdminActions.classList.toggle(hiddenClass, !isAdminSession);
+    if (profileBasicActions) profileBasicActions.classList.toggle(hiddenClass, isAdminSession);
     profileSelect.disabled = !isMasterSession;
-    syncProfileActionButtons();
+    updateProfileButtons();
     profileStatus.textContent = isMasterSession
       ? `Current profile: ${activeProfile}`
       : '';
@@ -688,13 +600,13 @@ window.addEventListener('DOMContentLoaded', () => {
     loadPlayCount();
     applyTheme(preferences.theme);
     await ensureDefaultPlaylists();
-    await preloadDemosIfEmpty();
-    await normalizeDefaultPlaylists(activeProfile);
-    await syncLibraryView();
+    await loadDemos();
+    await mergeDuplicates(activeProfile);
+    await refreshLibrary();
     syncPreferenceUI();
-    const snapshot = await buildStatsSnapshot();
-    renderStatsSnapshot(snapshot);
-    await syncProfileSwitchUI();
+    const snapshot = await makeStatsSummary();
+    showStatsSummary(snapshot);
+    await refreshProfileUI();
     showToast(`Switched to profile: ${activeProfile}`);
   }
 
@@ -729,9 +641,9 @@ window.addEventListener('DOMContentLoaded', () => {
     if (confirmDeleteToggle) confirmDeleteToggle.checked = !!preferences.confirmDelete;
   }
 
-  async function refreshLikedSongsSet() {
+  async function refreshLiked() {
     likedSongs = new Set();
-    const likedPlaylist = await getPlaylistByName(PLAYLIST_LIKED);
+    const likedPlaylist = await findPlaylistByName(PLAYLIST_LIKED);
     likedPlaylistId = likedPlaylist ? likedPlaylist.id : null;
     if (!db || !likedPlaylistId) return;
 
@@ -750,7 +662,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  const removeFromLikedPlaylist = (likedId) => new Promise((resolve) => {
+  const removeLikedSong = (likedId) => new Promise((resolve) => {
     if (!db || !likedPlaylistId) return resolve(false);
     const tx = db.transaction("songs", "readwrite");
     const store = tx.objectStore("songs");
@@ -822,14 +734,14 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   async function toggleLike(songObj) {
-    const likedPlaylist = await getPlaylistByName(PLAYLIST_LIKED);
+    const likedPlaylist = await findPlaylistByName(PLAYLIST_LIKED);
     likedPlaylistId = likedPlaylist ? likedPlaylist.id : null;
     if (!likedPlaylistId) return;
 
     const likedId = getSongLikeId(songObj);
 
     if (likedSongs.has(likedId)) {
-      await removeFromLikedPlaylist(likedId);
+      await removeLikedSong(likedId);
       likedSongs.delete(likedId);
       showToast(`Removed from ${PLAYLIST_LIKED}`, 3000);
     } else {
@@ -840,7 +752,7 @@ window.addEventListener('DOMContentLoaded', () => {
         return;
       }
       likedSongs.add(likedId);
-      await addToStore("songs", {
+      await addRow("songs", {
         name: songObj.name,
         audioBlob,
         imageBlob: imageCache[songObj.id] || null,
@@ -852,7 +764,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     if (currentPlaylistId === likedPlaylistId) {
-      await loadSongsForCurrentPlaylist();
+      await loadCurrentSongs();
     } else {
       rebuildSongUI();
     }
@@ -866,23 +778,23 @@ window.addEventListener('DOMContentLoaded', () => {
     tx.objectStore("songs").add({ name, audioBlob, imageBlob, playlistId, owner: activeProfile });
     tx.oncomplete = async () => {
       showToast("Song added");
-      await loadSongsForPlaylist(playlistId);
+      await loadSongs(playlistId);
       if (playlistId === currentPlaylistId) rebuildSongUI();
     };
   }
 
-  async function loadSongsForCurrentPlaylist() {
+  async function loadCurrentSongs() {
     if (!currentPlaylistId) {
       songs = [];
       currentIndex = -1;
       rebuildSongUI();
       return;
     }
-    await loadSongsForPlaylist(currentPlaylistId);
+    await loadSongs(currentPlaylistId);
     rebuildSongUI();
   }
 
-  async function loadSongsForPlaylist(playlistId) {
+  async function loadSongs(playlistId) {
     songs.forEach((song) => {
       if (song.audioURL) URL.revokeObjectURL(song.audioURL);
       if (song.imageURL) URL.revokeObjectURL(song.imageURL);
@@ -970,9 +882,9 @@ window.addEventListener('DOMContentLoaded', () => {
     const tx = db.transaction("songs", "readwrite");
     tx.objectStore("songs").delete(id);
     tx.oncomplete = async () => {
-      await refreshLikedSongsSet();
+      await refreshLiked();
       showToast("Song deleted");
-      await loadSongsForCurrentPlaylist();
+      await loadCurrentSongs();
     };
   }
 
@@ -1005,7 +917,7 @@ window.addEventListener('DOMContentLoaded', () => {
     req.onsuccess = async (e) => {
       currentPlaylistId = e.target.result;
       showToast("Playlist created");
-      await syncLibraryView({ focusPlaylistId: currentPlaylistId });
+      await refreshLibrary({ focusPlaylistId: currentPlaylistId });
     };
   }
 
@@ -1034,7 +946,7 @@ window.addEventListener('DOMContentLoaded', () => {
     tx.oncomplete = async () => {
       showToast("Playlist deleted");
       if (currentPlaylistId === id) currentPlaylistId = null;
-      await syncLibraryView();
+      await refreshLibrary();
       hideModal(deleteConfirmPopup);
       playlistToDelete = null;
     };
@@ -1049,7 +961,7 @@ window.addEventListener('DOMContentLoaded', () => {
       obj.name = newName;
       store.put(obj).onsuccess = async () => {
         showToast("Playlist renamed");
-        await syncLibraryView({ focusPlaylistId: currentPlaylistId });
+        await refreshLibrary({ focusPlaylistId: currentPlaylistId });
       };
     };
   }
@@ -1076,7 +988,7 @@ window.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.playlist').forEach(pl => pl.classList.remove('active'));
         item.classList.add('active');
         currentPlaylistId = p.id;
-        await loadSongsForCurrentPlaylist();
+        await loadCurrentSongs();
       };
 
       if (!isProtectedPlaylist) {
@@ -1123,27 +1035,27 @@ window.addEventListener('DOMContentLoaded', () => {
   }
 
   async function ensureDefaultPlaylists() {
-    const libraryExists = await getPlaylistByName('My Library');
+    const libraryExists = await findPlaylistByName('My Library');
     if (!libraryExists) {
-      await addToStore("playlists", { name: "My Library", owner: activeProfile });
+      await addRow("playlists", { name: "My Library", owner: activeProfile });
     }
 
-    const demosExists = await getPlaylistByName(PLAYLIST_DEMOS);
+    const demosExists = await findPlaylistByName(PLAYLIST_DEMOS);
     if (!demosExists) {
-      await addToStore("playlists", { name: PLAYLIST_DEMOS, owner: activeProfile });
+      await addRow("playlists", { name: PLAYLIST_DEMOS, owner: activeProfile });
     }
 
-    const likedExists = await getPlaylistByName(PLAYLIST_LIKED);
+    const likedExists = await findPlaylistByName(PLAYLIST_LIKED);
     if (!likedExists) {
-      await addToStore("playlists", { name: PLAYLIST_LIKED, owner: activeProfile });
+      await addRow("playlists", { name: PLAYLIST_LIKED, owner: activeProfile });
     }
   }
 
-  async function preloadDemosIfEmpty() {
-    const demosPlaylists = await getProfilePlaylistsByName(PLAYLIST_DEMOS);
+  async function loadDemos() {
+    const demosPlaylists = await getPlaylistsNamed(PLAYLIST_DEMOS);
     if (!demosPlaylists.length) return;
 
-    const demoCounts = await Promise.all(demosPlaylists.map((playlist) => countSongsInPlaylist(playlist.id)));
+    const demoCounts = await Promise.all(demosPlaylists.map((playlist) => countPlaylistSongs(playlist.id)));
     if (demoCounts.some((count) => count > 0)) return;
 
     const demosPlaylist = demosPlaylists[0];
@@ -1170,7 +1082,7 @@ window.addEventListener('DOMContentLoaded', () => {
           const imgRes = await fetch(d.imagePath);
           if (imgRes.ok) imageBlob = await imgRes.blob();
         }
-        await addToStore("songs", {
+        await addRow("songs", {
           name: d.name,
           audioBlob,
           imageBlob,
@@ -1181,19 +1093,19 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  const countStore = (storeName) => new Promise((resolve) => {
+  const countRows = (storeName) => new Promise((resolve) => {
     const req = db.transaction(storeName, "readonly").objectStore(storeName).count();
     req.onsuccess = () => resolve(req.result || 0);
     req.onerror = () => resolve(0);
   });
 
-  const addToStore = (storeName, obj) => new Promise((resolve) => {
+  const addRow = (storeName, obj) => new Promise((resolve) => {
     const req = db.transaction(storeName, "readwrite").objectStore(storeName).add(obj);
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => resolve(null);
   });
 
-  const getPlaylistByName = (name) => new Promise((resolve) => {
+  const findPlaylistByName = (name) => new Promise((resolve) => {
     const req = db.transaction("playlists", "readonly").objectStore("playlists").openCursor();
     req.onsuccess = (e) => {
       const cursor = e.target.result;
@@ -1204,7 +1116,7 @@ window.addEventListener('DOMContentLoaded', () => {
     req.onerror = () => resolve(null);
   });
 
-  const countSongsInPlaylist = (playlistId) => new Promise((resolve) => {
+  const countPlaylistSongs = (playlistId) => new Promise((resolve) => {
     let count = 0;
     const req = db.transaction("songs", "readonly").objectStore("songs").index("playlist_idx").openCursor(IDBKeyRange.only(playlistId));
     req.onsuccess = (e) => {
@@ -1239,7 +1151,7 @@ window.addEventListener('DOMContentLoaded', () => {
     req.onerror = () => resolve(allSongs);
   });
 
-  const buildStatsSnapshot = async () => {
+  const makeStatsSummary = async () => {
     const allSongs = await getAllSongs();
     const playCounts = allSongs.map((song) => ({
       id: song.id,
@@ -1271,7 +1183,7 @@ window.addEventListener('DOMContentLoaded', () => {
     };
   };
 
-  const parseAndValidateStatsImport = (rawData) => {
+  const parseStats = (rawData) => {
     if (!rawData || typeof rawData !== 'object' || Array.isArray(rawData)) {
       throw new Error('Invalid JSON structure.');
     }
@@ -1306,7 +1218,7 @@ window.addEventListener('DOMContentLoaded', () => {
     return normalised;
   };
 
-  const applyImportedStats = async (entries) => {
+  const applyStats = async (entries) => {
     const allSongs = await getAllSongs();
     const songsById = new Map(allSongs.map((song) => [song.id, song]));
     const songsByName = new Map();
@@ -1343,7 +1255,7 @@ window.addEventListener('DOMContentLoaded', () => {
     return matched;
   };
 
-  const getImportMatchCount = async (entries) => {
+  const countMatches = async (entries) => {
     const allSongs = await getAllSongs();
     const ids = new Set(allSongs.map((song) => song.id));
     const names = new Set(allSongs.map((song) => (song.name || '').trim().toLowerCase()).filter(Boolean));
@@ -1362,7 +1274,7 @@ window.addEventListener('DOMContentLoaded', () => {
     return matches;
   };
 
-  const renderStatsSnapshot = (snapshot) => {
+  const showStatsSummary = (snapshot) => {
     statsContent.innerHTML = `
       <div><strong>Total Songs:</strong> ${snapshot.totals.songs}</div>
       <div><strong>Total Playlists:</strong> ${snapshot.totals.playlists}</div>
@@ -1377,8 +1289,8 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   };
 
-  const exportStatsAsJson = async () => {
-    const snapshot = await buildStatsSnapshot();
+  const exportStats = async () => {
+    const snapshot = await makeStatsSummary();
     const exportData = {
       app: "MusicMixer",
       ...snapshot
@@ -1396,7 +1308,7 @@ window.addEventListener('DOMContentLoaded', () => {
     URL.revokeObjectURL(url);
   };
 
-  const getAllStoreRows = (storeName) => new Promise((resolve) => {
+  const getAllRows = (storeName) => new Promise((resolve) => {
     const rows = [];
     const req = db.transaction(storeName, 'readonly').objectStore(storeName).openCursor();
     req.onsuccess = (e) => {
@@ -1411,12 +1323,12 @@ window.addEventListener('DOMContentLoaded', () => {
     req.onerror = () => resolve(rows);
   });
 
-  const getProfilePlaylistsByName = async (name, profileName = activeProfile) => {
-    const rows = await getAllStoreRows('playlists');
+  const getPlaylistsNamed = async (name, profileName = activeProfile) => {
+    const rows = await getAllRows('playlists');
     return rows.filter((row) => row.name === name && isRowForProfile(row, profileName));
   };
 
-  const rewriteSongsToPlaylist = (fromPlaylistIds, toPlaylistId) => new Promise((resolve) => {
+  const moveSongsToPlaylist = (fromPlaylistIds, toPlaylistId) => new Promise((resolve) => {
     if (!db || !fromPlaylistIds.size) return resolve(true);
     const tx = db.transaction('songs', 'readwrite');
     const store = tx.objectStore('songs');
@@ -1434,7 +1346,7 @@ window.addEventListener('DOMContentLoaded', () => {
     tx.onerror = () => resolve(false);
   });
 
-  const deletePlaylistsByIds = (playlistIds) => new Promise((resolve) => {
+  const deletePlaylistsById = (playlistIds) => new Promise((resolve) => {
     if (!db || !playlistIds.size) return resolve(true);
     const tx = db.transaction('playlists', 'readwrite');
     const store = tx.objectStore('playlists');
@@ -1452,21 +1364,21 @@ window.addEventListener('DOMContentLoaded', () => {
     tx.onerror = () => resolve(false);
   });
 
-  const normalizeDefaultPlaylists = async (profileName = activeProfile) => {
+  const mergeDuplicates = async (profileName = activeProfile) => {
     for (const playlistName of ["My Library", PLAYLIST_DEMOS, PLAYLIST_LIKED]) {
-      const matches = (await getProfilePlaylistsByName(playlistName, profileName)).sort((a, b) => a.id - b.id);
+      const matches = (await getPlaylistsNamed(playlistName, profileName)).sort((a, b) => a.id - b.id);
       if (matches.length < 2) continue;
 
       const keptPlaylist = matches[0];
       const duplicateIds = new Set(matches.slice(1).map((row) => row.id));
-      await rewriteSongsToPlaylist(duplicateIds, keptPlaylist.id);
-      await deletePlaylistsByIds(duplicateIds);
+      await moveSongsToPlaylist(duplicateIds, keptPlaylist.id);
+      await deletePlaylistsById(duplicateIds);
     }
   };
 
-  const syncLibraryView = async ({ focusPlaylistId = null } = {}) => {
+  const refreshLibrary = async ({ focusPlaylistId = null } = {}) => {
     await loadPlaylists();
-    await refreshLikedSongsSet();
+    await refreshLiked();
 
     const hasFocusPlaylist = focusPlaylistId !== null && playlists.some((playlist) => playlist.id === focusPlaylistId);
     const hasCurrentPlaylist = currentPlaylistId !== null && playlists.some((playlist) => playlist.id === currentPlaylistId);
@@ -1478,7 +1390,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     await renderPlaylists();
-    await loadSongsForCurrentPlaylist();
+    await loadCurrentSongs();
     populatePlaylistSelect();
   };
 
@@ -1489,10 +1401,10 @@ window.addEventListener('DOMContentLoaded', () => {
     tx.onerror = () => resolve(false);
   });
 
-  const buildProfileBackupPayload = async (profileName) => {
-    const playlistsRows = (await getAllStoreRows('playlists')).filter((row) => isRowForProfile(row, profileName));
+  const buildBackup = async (profileName) => {
+    const playlistsRows = (await getAllRows('playlists')).filter((row) => isRowForProfile(row, profileName));
     const playlistIds = new Set(playlistsRows.map((row) => row.id));
-    const songsRows = (await getAllStoreRows('songs')).filter((row) => playlistIds.has(row.playlistId));
+    const songsRows = (await getAllRows('songs')).filter((row) => playlistIds.has(row.playlistId));
 
     const serialisedSongs = songsRows.map((song) => ({
       id: song.id,
@@ -1504,14 +1416,14 @@ window.addEventListener('DOMContentLoaded', () => {
 
     return {
       profile: profileName,
-      preferences: getPreferencesForProfile(profileName),
-      playCount: getPlayCountForProfile(profileName),
+      preferences: getPrefs(profileName),
+      playCount: getPlayCount(profileName),
       playlists: playlistsRows,
       songs: serialisedSongs
     };
   };
 
-  const downloadJsonFile = (dataObj, fileName) => {
+  const downloadFile = (dataObj, fileName) => {
     const backupJson = JSON.stringify(dataObj, null, 2);
     const blob = new Blob([backupJson], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -1524,13 +1436,13 @@ window.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => URL.revokeObjectURL(url), 1500);
   };
 
-  const saveJsonFile = async (dataObj, fileName) => {
-    downloadJsonFile(dataObj, fileName);
+  const saveFile = async (dataObj, fileName) => {
+    downloadFile(dataObj, fileName);
     return true;
   };
 
-  const exportFullBackupAsJson = async (profileName = activeProfile) => {
-    const payload = await buildProfileBackupPayload(profileName);
+  const exportBackup = async (profileName = activeProfile) => {
+    const payload = await buildBackup(profileName);
     const backup = {
       app: 'MusicMixer',
       schemaVersion: 1,
@@ -1538,14 +1450,14 @@ window.addEventListener('DOMContentLoaded', () => {
       ...payload
     };
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    return saveJsonFile(backup, `musicmixer-backup-${profileName}-${timestamp}.json`);
+    return saveFile(backup, `musicmixer-backup-${profileName}-${timestamp}.json`);
   };
 
-  const exportAllBackupsAsJson = async () => {
+  const exportAllBackups = async () => {
     const users = await getAllUsers();
     const profiles = [];
     for (const username of users) {
-      profiles.push(await buildProfileBackupPayload(username));
+      profiles.push(await buildBackup(username));
     }
 
     const backup = {
@@ -1557,12 +1469,12 @@ window.addEventListener('DOMContentLoaded', () => {
     };
 
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    return saveJsonFile(backup, `musicmixer-backup-all-accounts-${timestamp}.json`);
+    return saveFile(backup, `musicmixer-backup-all-accounts-${timestamp}.json`);
   };
 
-  const wipeProfileLibraryData = async (profileName, options = {}) => {
+  const clearProfileSongs = async (profileName, options = {}) => {
     const { preserveDemoPlaylist = false } = options;
-    const profilePlaylists = (await getAllStoreRows('playlists')).filter((row) => isRowForProfile(row, profileName));
+    const profilePlaylists = (await getAllRows('playlists')).filter((row) => isRowForProfile(row, profileName));
     const profilePlaylistIds = new Set(profilePlaylists.map((row) => row.id));
     const protectedPlaylistIds = new Set();
 
@@ -1621,18 +1533,18 @@ window.addEventListener('DOMContentLoaded', () => {
       throw new Error('Backup payload is missing playlists or songs.');
     }
 
-    await wipeProfileLibraryData(targetProfile, { preserveDemoPlaylist: true });
+    await clearProfileSongs(targetProfile, { preserveDemoPlaylist: true });
 
     const playlistMap = new Map();
     for (const playlist of payload.playlists) {
-      const createdId = await addToStore('playlists', { name: playlist.name, owner: targetProfile });
+      const createdId = await addRow('playlists', { name: playlist.name, owner: targetProfile });
       playlistMap.set(playlist.id, createdId);
     }
 
     const songIdMap = new Map();
     for (const song of payload.songs) {
       const mappedPlaylistId = playlistMap.get(song.playlistId) || playlistMap.values().next().value || currentPlaylistId;
-      const createdSongId = await addToStore('songs', {
+      const createdSongId = await addRow('songs', {
         name: song.name,
         audioBlob: song.audioBlob ? base64ToBlob(song.audioBlob) : createPlaceholderAudioBlob(),
         imageBlob: song.imageBlob ? base64ToBlob(song.imageBlob) : null,
@@ -1651,7 +1563,7 @@ window.addEventListener('DOMContentLoaded', () => {
         ...payload.preferences
       }
       : { theme: 'dark', autoPlayNext: true, confirmDelete: true };
-    setPreferencesForProfile(targetProfile, nextPreferences);
+    setPrefs(targetProfile, nextPreferences);
 
     const remappedPlayCount = {};
     if (payload.playCount && typeof payload.playCount === 'object') { 
@@ -1662,7 +1574,7 @@ window.addEventListener('DOMContentLoaded', () => {
         }
       });
     }
-    setPlayCountForProfile(targetProfile, remappedPlayCount);
+    setPlayCount(targetProfile, remappedPlayCount);
 
     if (targetProfile === activeProfile) {
       preferences = nextPreferences;
@@ -1688,8 +1600,8 @@ window.addEventListener('DOMContentLoaded', () => {
 
     await applyProfileBackupPayload(payload, targetProfile);
 
-    await normalizeDefaultPlaylists(targetProfile);
-    await syncLibraryView();
+    await mergeDuplicates(targetProfile);
+    await refreshLibrary();
   };
 
   const importAllBackupsFromJson = async (rawText) => {
@@ -1716,14 +1628,14 @@ window.addEventListener('DOMContentLoaded', () => {
     }
 
     for (const profileName of importedProfiles) {
-      await normalizeDefaultPlaylists(profileName);
+      await mergeDuplicates(profileName);
     }
-    await syncLibraryView();
+    await refreshLibrary();
     return importedCount;
   };
 
   const resetCurrentData = async () => {
-    await wipeProfileLibraryData(activeProfile, { preserveDemoPlaylist: true });
+    await clearProfileSongs(activeProfile, { preserveDemoPlaylist: true });
 
     playCount = {};
     savePlayCount();
@@ -1736,9 +1648,9 @@ window.addEventListener('DOMContentLoaded', () => {
     applyTheme(preferences.theme);
     syncPreferenceUI();
     await ensureDefaultPlaylists();
-    await preloadDemosIfEmpty();
-    await normalizeDefaultPlaylists(activeProfile);
-    await syncLibraryView();
+    await loadDemos();
+    await mergeDuplicates(activeProfile);
+    await refreshLibrary();
   };
 
   addSongBtn.addEventListener('click', () => {
@@ -1752,7 +1664,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
     saveSong(nameInput.value.trim(), fileInput.files[0], imageInput.files[0] || null, selectedPlaylistId);
     nameInput.value = fileInput.value = imageInput.value = "";
-    hideModal(overlay);
+    hideModal(uploadModal);
   });
 
   playButton.addEventListener('click', () => {
@@ -1818,30 +1730,30 @@ window.addEventListener('DOMContentLoaded', () => {
     return mins + ':' + (secs < 10 ? '0' : '') + secs;
   };
 
-  on(openMenuBtn, 'click', () => {
+  onEvent(openUploadBtn, 'click', () => {
     populatePlaylistSelect();
-    showModal(overlay);
+    showModal(uploadModal);
   });
-  on(closeBtn, 'click', () => hideModal(overlay));
-  bindOverlayClose(overlay, () => hideModal(overlay));
+  onEvent(closeUploadBtn, 'click', () => hideModal(uploadModal));
+  closeOnBackdropClick(uploadModal, () => hideModal(uploadModal));
 
-  on(statsBtn, 'click', async () => {
-    const snapshot = await buildStatsSnapshot();
-    renderStatsSnapshot(snapshot);
-    showModal(statsPopup);
+  onEvent(statsBtn, 'click', async () => {
+    const snapshot = await makeStatsSummary();
+    showStatsSummary(snapshot);
+    showModal(statsModal);
   });
 
-  on(closeStatsBtn, 'click', () => hideModal(statsPopup));
-  bindOverlayClose(statsPopup, () => hideModal(statsPopup));
+  onEvent(closeStatsBtn, 'click', () => hideModal(statsModal));
+  closeOnBackdropClick(statsModal, () => hideModal(statsModal));
 
-  on(preferencesBtn, 'click', () => {
+  onEvent(preferencesBtn, 'click', () => {
     syncPreferenceUI();
-    syncProfileSwitchUI();
+    refreshProfileUI();
     showModal(preferencesPopup);
   });
 
-  on(closePreferencesBtn, 'click', () => hideModal(preferencesPopup));
-  bindOverlayClose(preferencesPopup, () => hideModal(preferencesPopup));
+  onEvent(closePreferencesBtn, 'click', () => hideModal(preferencesPopup));
+  closeOnBackdropClick(preferencesPopup, () => hideModal(preferencesPopup));
 
   if (themeSelect) {
     themeSelect.addEventListener('change', () => {
@@ -1866,27 +1778,27 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  on(exportBackupBtn, 'click', async () => {
+  onEvent(exportBackupBtn, 'click', async () => {
     try {
-      const saved = await exportFullBackupAsJson(activeProfile);
+      const saved = await exportBackup(activeProfile);
       if (saved) showToast('Backup exported as JSON');
     } catch (err) {
       showToast('Failed to export backup');
     }
   });
 
-  on(importBackupBtn, 'click', () => {
+  onEvent(importBackupBtn, 'click', () => {
     if (importBackupInput) importBackupInput.click();
   });
 
-  on(importBackupInput, 'change', async () => {
+  onEvent(importBackupInput, 'change', async () => {
     const file = importBackupInput.files && importBackupInput.files[0];
     if (!file) return;
 
     try {
       const rawText = await file.text();
       if (!isMasterSession) {
-        const approved = await requestStyledConfirmation({
+        const approved = await askConfirm({
           title: 'Import Backup',
           message: 'Import backup and overwrite current account songs/playlists?',
           confirmLabel: 'Import'
@@ -1903,7 +1815,7 @@ window.addEventListener('DOMContentLoaded', () => {
       if (!mode) return;
 
       if (mode === '3') {
-        const approved = await requestStyledConfirmation({
+        const approved = await askConfirm({
           title: 'Import Backup',
           message: 'Import and overwrite backup data for all matching accounts in this file?',
           confirmLabel: 'Import All'
@@ -1928,7 +1840,7 @@ window.addEventListener('DOMContentLoaded', () => {
         targetProfile = username;
       }
 
-      const approved = await requestStyledConfirmation({
+      const approved = await askConfirm({
         title: 'Import Backup',
         message: `Import backup and overwrite songs/playlists for "${targetProfile}"?`,
         confirmLabel: 'Import'
@@ -1946,8 +1858,8 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  on(resetDataBtn, 'click', async () => {
-    const approved = await requestStyledConfirmation({
+  onEvent(resetDataBtn, 'click', async () => {
+    const approved = await askConfirm({
       title: 'Reset Account Data',
       message: 'Reset this account to factory presets? This removes custom playlists and songs for this account only.',
       confirmLabel: 'Reset'
@@ -1957,7 +1869,7 @@ window.addEventListener('DOMContentLoaded', () => {
     showToast('App data reset');
   });
 
-  on(switchProfileBtn, 'click', async () => {
+  onEvent(switchProfileBtn, 'click', async () => {
     if (!isMasterSession) {
       showToast('Profile switch is only available for admin account');
       return;
@@ -1965,19 +1877,19 @@ window.addEventListener('DOMContentLoaded', () => {
     await switchActiveProfile(profileSelect.value);
   });
 
-  on(profileSelect, 'change', () => {
-    syncProfileActionButtons();
+  onEvent(profileSelect, 'change', () => {
+    updateProfileButtons();
   });
 
-  on(logoutBtn, 'click', () => {
+  onEvent(logoutBtn, 'click', () => {
     logoutCurrentSession();
   });
 
-  on(switchAccountsBtn, 'click', () => {
+  onEvent(switchAccountsBtn, 'click', () => {
     logoutCurrentSession();
   });
 
-  on(deleteAccountBtn, 'click', async () => {
+  onEvent(deleteAccountBtn, 'click', async () => {
     if (!isMasterSession) {
       showToast('Only admin can delete accounts');
       return;
@@ -1994,7 +1906,7 @@ window.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const approved = await requestStyledConfirmation({
+    const approved = await askConfirm({
       title: 'Delete Account',
       message: `Delete account "${selectedProfile}"?`,
       confirmLabel: 'Delete'
@@ -2014,11 +1926,11 @@ window.addEventListener('DOMContentLoaded', () => {
       await switchActiveProfile(ADMIN_ACCOUNT_NAME);
     }
 
-    await syncProfileSwitchUI();
+    await refreshProfileUI();
     showToast(`Deleted account: ${selectedProfile}`);
   });
 
-  on(changePasswordBtn, 'click', async () => {
+  onEvent(changePasswordBtn, 'click', async () => {
     if (!isMasterSession) {
       showToast('Only admin can change account passwords');
       return;
@@ -2045,7 +1957,7 @@ window.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const didUpdate = await updateUserPassword(selectedProfile, password);
+    const didUpdate = await changePassword(selectedProfile, password);
     if (!didUpdate) {
       showToast('Failed to change password');
       return;
@@ -2056,13 +1968,13 @@ window.addEventListener('DOMContentLoaded', () => {
 
   syncPreferenceUI();
 
-  on(newPlaylistBtn, 'click', () => {
+  onEvent(newPlaylistBtn, 'click', () => {
     newPlaylistInput.value = '';
     showModal(newPlaylistPopup);
     setTimeout(() => newPlaylistInput.focus(), 100);
   });
 
-  on(createPlaylistBtn, 'click', () => {
+  onEvent(createPlaylistBtn, 'click', () => {
     const name = newPlaylistInput.value.trim();
     if (name) {
       createPlaylist(name);
@@ -2070,9 +1982,9 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  on(cancelNewPlaylistBtn, 'click', () => hideModal(newPlaylistPopup));
-  on(closeNewPlaylistBtn, 'click', () => hideModal(newPlaylistPopup));
-  bindOverlayClose(newPlaylistPopup, () => hideModal(newPlaylistPopup));
+  onEvent(cancelNewPlaylistBtn, 'click', () => hideModal(newPlaylistPopup));
+  onEvent(closeNewPlaylistBtn, 'click', () => hideModal(newPlaylistPopup));
+  closeOnBackdropClick(newPlaylistPopup, () => hideModal(newPlaylistPopup));
 
   newPlaylistInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
@@ -2090,17 +2002,17 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  on(cancelRenamePlaylistBtn, 'click', () => {
+  onEvent(cancelRenamePlaylistBtn, 'click', () => {
     hideModal(renamePlaylistPopup);
     renamePlaylistId = null;
   });
   
-  on(closeRenamePlaylistBtn, 'click', () => {
+  onEvent(closeRenamePlaylistBtn, 'click', () => {
     hideModal(renamePlaylistPopup);
     renamePlaylistId = null;
   });
   
-  on(renamePlaylistPopup, 'click', (e) => {
+  onEvent(renamePlaylistPopup, 'click', (e) => {
     if (e.target === renamePlaylistPopup) {
       hideModal(renamePlaylistPopup);
       renamePlaylistId = null;
@@ -2124,30 +2036,30 @@ window.addEventListener('DOMContentLoaded', () => {
     closeDeleteConfirmBtn.addEventListener('click', closeDeleteModal);
   }
 
-  bindOverlayClose(deleteConfirmPopup, closeDeleteModal);
+  closeOnBackdropClick(deleteConfirmPopup, closeDeleteModal);
 
   if (cancelImportBtn) {
-    cancelImportBtn.addEventListener('click', () => closeStyledConfirm(false));
+    cancelImportBtn.addEventListener('click', () => closeConfirmDialog(false));
   }
 
   if (closeImportConfirmBtn) {
-    closeImportConfirmBtn.addEventListener('click', () => closeStyledConfirm(false));
+    closeImportConfirmBtn.addEventListener('click', () => closeConfirmDialog(false));
   }
 
-  bindOverlayClose(importConfirmPopup, () => closeStyledConfirm(false));
+  closeOnBackdropClick(importConfirmPopup, () => closeConfirmDialog(false));
 
   if (confirmImportBtn) {
-    confirmImportBtn.addEventListener('click', () => closeStyledConfirm(true));
+    confirmImportBtn.addEventListener('click', () => closeConfirmDialog(true));
   }
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
-      if (importConfirmPopup && !importConfirmPopup.classList.contains(HIDDEN_CLASS)) {
-        closeStyledConfirm(false);
+      if (importConfirmPopup && !importConfirmPopup.classList.contains(hiddenClass)) {
+        closeConfirmDialog(false);
       }
       [
-        overlay,
-        statsPopup,
+        uploadModal,
+        statsModal,
         preferencesPopup,
         newPlaylistPopup,
         renamePlaylistPopup,
@@ -2155,7 +2067,7 @@ window.addEventListener('DOMContentLoaded', () => {
       ].forEach((modalEl) => hideModal(modalEl));
     }
 
-    if (e.key === 'Enter' && !deleteConfirmPopup.classList.contains(HIDDEN_CLASS)) {
+    if (e.key === 'Enter' && !deleteConfirmPopup.classList.contains(hiddenClass)) {
       performDelete();
     }
   });
