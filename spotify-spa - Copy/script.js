@@ -105,6 +105,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (el) el.classList.add(hiddenClass);
   };
 
+  //This wil close the popup whe the user clicks out of the content
   const closeOnBackdropClick = (overlayEl, closeFn) => {
     if (!overlayEl) return;
     onEvent(overlayEl, 'click', (e) => {
@@ -112,12 +113,14 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   };
 
+  // gets the preferred playlist on load, defaults to demos
   const getPreferredPlaylistId = (playlistRows) => {
     if (!Array.isArray(playlistRows) || !playlistRows.length) return null;
     const demoPlaylist = playlistRows.find((playlist) => playlist.name === PLAYLIST_DEMOS);
     return demoPlaylist ? demoPlaylist.id : playlistRows[0].id;
   };
 
+  // closes the confirm popup and resolves the dialog
   const closeConfirmDialog = (result = false) => {
     hideModal(importConfirmPopup);
     const resolver = pendingConfirmResolve;
@@ -125,18 +128,21 @@ window.addEventListener('DOMContentLoaded', () => {
     if (resolver) resolver(result);
   };
 
+  // This will give the user a confirmation dialog and resolve a promise with their input
   const askConfirm = ({ title, message, confirmLabel = 'Confirm' }) => new Promise((resolve) => {
     if (!importConfirmPopup || !importConfirmMessage || !confirmImportBtn || !importConfirmTitle) {
       resolve(confirm(message));
       return;
     }
 
+    //This will resolve a prior dialog if a new dialog is triggered, Defaults to false. 
     if (pendingConfirmResolve) {
       const previous = pendingConfirmResolve;
       pendingConfirmResolve = null;
       previous(false);
     }
 
+    // show the confirmation dialog and store the resolver
     importConfirmTitle.textContent = title;
     importConfirmMessage.textContent = message;
     confirmImportBtn.textContent = confirmLabel;
@@ -144,6 +150,7 @@ window.addEventListener('DOMContentLoaded', () => {
     showModal(importConfirmPopup);
   });
 
+  // state variables
   let db, songs = [], currentIndex = -1, playlists = [], currentPlaylistId = null, playCount = {}, audioCache = {}, imageCache = {}, likedSongs = new Set(), renamePlaylistId = null, playlistToDelete = null, likedPlaylistId = null;
   let pendingConfirmResolve = null;
   let activeProfile = ADMIN_ACCOUNT_NAME;
@@ -156,8 +163,10 @@ window.addEventListener('DOMContentLoaded', () => {
     confirmDelete: true
   };
 
+  // Initialise IndexedDB
   const request = indexedDB.open(DB_NAME, DB_VERSION);
   
+  // This will create the database and object stores
   request.onupgradeneeded = (e) => {
     db = e.target.result;
     if (!db.objectStoreNames.contains("songs")) {
@@ -174,6 +183,8 @@ window.addEventListener('DOMContentLoaded', () => {
       songsStore.createIndex("playlist_idx", "playlistId", { unique: false });
     }
   };
+
+  // This will run when the database is opened, it creates the admin account and then shows the login screen
   request.onsuccess = async (e) => {
     try {
       db = e.target.result;
@@ -188,11 +199,12 @@ window.addEventListener('DOMContentLoaded', () => {
       hideLoadingScreen();
     }
   };
+  // This will run if there is an error opening the database
   request.onerror = (e) => {
     showToast("Storage failed. Changes won't persist.");
     hideLoadingScreen();
   };
-
+// This will ensure the users object store exists
   const ensureUsersDB = () => new Promise((resolve, reject) => {
     if (!db) return resolve();
     if (db.objectStoreNames.contains("users")) return resolve();
@@ -213,6 +225,7 @@ window.addEventListener('DOMContentLoaded', () => {
     upgradeReq.onerror = () => reject(upgradeReq.error);
   });
 
+  // This will show the login/signup screen and hide the loading spinner
   function showLoginScreen() {
     const spinner = document.querySelector('.loading-spinner');
     const loadingContent = document.querySelector('.loading-content');
@@ -225,12 +238,13 @@ window.addEventListener('DOMContentLoaded', () => {
       }, 300);
     }
     
+    // This will slide up the loading content and fade in the login form
     setTimeout(() => {
       if (loadingContent) {
         loadingContent.classList.add('slide-up');
         loadingContent.classList.add('login-mode');
       }
-      
+    
       setTimeout(() => {
         if (loginForm) {
           loginForm.classList.remove('hidden');
@@ -240,6 +254,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }, 300);
   }
 
+  //This will create the default playlists and demos
   async function initialiseApp() {
     loadPreferences();
     loadPlayCount();
@@ -252,6 +267,7 @@ window.addEventListener('DOMContentLoaded', () => {
     hideLoadingScreen();
   }
 
+  // This will fade out the loading screen element
   function hideLoadingScreen() {
     const loadingScreen = document.getElementById('loadingScreen');
     if (loadingScreen) {
@@ -262,6 +278,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // This will log out the current user and show the login screen
   function logoutCurrentSession() {
     hideModal(preferencesPopup);
     currentSessionUser = null;
@@ -271,11 +288,13 @@ window.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => window.location.reload(), 250);
   }
 
+  // This will handle the signup, it will check for an existing username and creates a new user in the database if not found
   async function signup(username, password) {
     if (!username || !password) {
       return { success: false, message: "Username and password required" };
     }
 
+    // This will ensure the users database exists before trying to add a user
     await ensureUsersDB();
 
     const existingUser = await getUser(username);
@@ -289,6 +308,7 @@ window.addEventListener('DOMContentLoaded', () => {
     return { success: true };
   }
 
+  // This will handle the login, it will check for the user in the database and verify the password
   async function login(username, password) {
     if (!username || !password) {
       return { success: false, message: "Username and password required" };
@@ -308,6 +328,7 @@ window.addEventListener('DOMContentLoaded', () => {
     return { success: true };
   }
 
+  // This will get a user from the database by username
   const getUser = (username) => new Promise((resolve) => {
     if (!db) return resolve(null);
     try {
@@ -324,7 +345,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (existing) return;
     await addRow('users', { username: ADMIN_ACCOUNT_NAME, password: ADMIN_ACCOUNT_NAME });
   };
-
+  //this will create the event listeners for the login/signup tabs
   const loginTab = document.getElementById('loginTab');
   const signupTab = document.getElementById('signupTab');
   const loginPanel = document.getElementById('loginPanel');
@@ -380,7 +401,7 @@ window.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-
+// This will validate the input and attempt to create a new user
   if (signupBtn) {
     signupBtn.addEventListener('click', async () => {
       const username = document.getElementById('signupUsername').value.trim();
@@ -403,7 +424,7 @@ window.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-
+// This will allow the user to press enter to submit their login/signup info
   const bindEnter = (id, action) => {
     const el = document.getElementById(id);
     if (!el) return;
@@ -415,6 +436,7 @@ window.addEventListener('DOMContentLoaded', () => {
   ['loginUsername', 'loginPassword'].forEach((id) => bindEnter(id, () => loginBtn.click()));
   ['signupUsername', 'signupPassword', 'signupConfirm'].forEach((id) => bindEnter(id, () => signupBtn.click()));
 
+  // This will show a temporary toast message at the bottom of the screen
   const showToast = (msg, duration = 1800) => {
     if (!toastEl) return;
     toastEl.textContent = msg;
@@ -428,6 +450,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   const getSongLikeId = (song) => song.originalSongId || song.id;
 
+  // This will toggle the like status of a song byadding or removing it from the liked playlist
   function loadPreferences() {
     try {
       const raw = localStorage.getItem(`musicmixer_preferences_${activeProfile}`);
@@ -442,6 +465,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // This will save the current preferences to localStorage
   function savePreferences() {
     localStorage.setItem(`musicmixer_preferences_${activeProfile}`, JSON.stringify(preferences));
   }
@@ -459,6 +483,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // This will save the current play count to localStorage
   function savePlayCount() {
     localStorage.setItem(getPlayCountKey(), JSON.stringify(playCount));
   }
@@ -467,10 +492,10 @@ window.addEventListener('DOMContentLoaded', () => {
     if (row && typeof row.owner === 'string' && row.owner.trim()) {
       return row.owner.trim();
     }
-    // Legacy rows created before account-scoping are treated as admin-owned.
     return ADMIN_ACCOUNT_NAME;
   };
 
+  // This will check if a given song or playlist belongs to a specific profile
   const isRowForProfile = (row, profileName) => getRowOwner(row) === profileName;
   const isRowForActiveProfile = (row) => getRowOwner(row) === activeProfile;
 
@@ -507,6 +532,7 @@ window.addEventListener('DOMContentLoaded', () => {
     localStorage.setItem(`${PLAYCOUNT_STORAGE_PREFIX}${profileName}`, JSON.stringify(nextPlayCount));
   };
 
+  // This will get all users from the database and return them as an array of usernames
   async function getAllUsers() {
     if (!db) return [];
     return new Promise((resolve) => {
@@ -525,6 +551,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  //This allows the admin panel to only be seen by the admin
   function updateProfileButtons() {
     if (!profileSelect || !switchProfileBtn || !deleteAccountBtn || !changePasswordBtn) return;
     const selectedProfile = (profileSelect.value || '').trim().toLowerCase();
@@ -535,6 +562,7 @@ window.addEventListener('DOMContentLoaded', () => {
     changePasswordBtn.disabled = !canManage;
   }
 
+  // This will delete a user account and all their data from the database
   async function deleteUserAccount(username) {
     if (!db || !username) return false;
     return new Promise((resolve) => {
@@ -545,12 +573,14 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // This will change a users password in the database
   async function changePassword(username, newPassword) {
     if (!db || !username || !newPassword) return false;
     const existing = await getUser(username);
     if (!existing) return false;
     existing.password = newPassword;
 
+    // This will update the user account with the new password
     return new Promise((resolve) => {
       const tx = db.transaction('users', 'readwrite');
       tx.objectStore('users').put(existing);
@@ -593,6 +623,7 @@ window.addEventListener('DOMContentLoaded', () => {
       : '';
   }
 
+  // This will switch the active profile and reload all data for that profile
   async function switchActiveProfile(nextProfile) {
     if (!nextProfile || nextProfile === activeProfile) return;
     activeProfile = nextProfile;
@@ -609,7 +640,7 @@ window.addEventListener('DOMContentLoaded', () => {
     await refreshProfileUI();
     showToast(`Switched to profile: ${activeProfile}`);
   }
-
+//This will turn a blobl into a base64 url for easier storage into IndexedDB
   const blobToBase64 = (blob) => new Promise((resolve, reject) => {
     if (!blob) return resolve(null);
     const reader = new FileReader();
@@ -635,6 +666,7 @@ window.addEventListener('DOMContentLoaded', () => {
     document.body.classList.toggle('light-mode', theme === 'light');
   }
 
+  // This will update the preferences based on the UI and save them
   function syncPreferenceUI() {
     if (themeSelect) themeSelect.value = preferences.theme;
     if (autoplayToggle) autoplayToggle.checked = !!preferences.autoPlayNext;
@@ -669,6 +701,7 @@ window.addEventListener('DOMContentLoaded', () => {
     const req = store.index("playlist_idx").openCursor(IDBKeyRange.only(likedPlaylistId));
     let deleted = false;
 
+    // This will loop through the liked playlist songs and delete the one that matches the likedId
     req.onsuccess = (e) => {
       const cursor = e.target.result;
       if (cursor) {
@@ -686,6 +719,7 @@ window.addEventListener('DOMContentLoaded', () => {
     tx.onerror = () => resolve(false);
   });
 
+  //This will play a song by its index in the song array
   const playSong = (index) => {
     const song = songs[index];
     if (!song) return;
@@ -699,6 +733,7 @@ window.addEventListener('DOMContentLoaded', () => {
     updateQueueView();
   };
 
+  //This will render a song in the song list with its name/like button/delete button
   function renderSong(songObj) {
     const row = document.createElement('div');
     row.className = 'song';
@@ -733,6 +768,7 @@ window.addEventListener('DOMContentLoaded', () => {
     songListContainer.appendChild(row);
   }
 
+  //This will toggle the like status of a song by adding it or removing it from the liked playlist
   async function toggleLike(songObj) {
     const likedPlaylist = await findPlaylistByName(PLAYLIST_LIKED);
     likedPlaylistId = likedPlaylist ? likedPlaylist.id : null;
@@ -772,6 +808,7 @@ window.addEventListener('DOMContentLoaded', () => {
     await renderPlaylists();
   }
 
+  //This will save a new song to the database
   function saveSong(name, audioBlob, imageBlob, playlistId) {
     if (!db) return alert("Storage not ready yet. Please wait a moment and try again.");
     const tx = db.transaction("songs", "readwrite");
@@ -828,6 +865,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // This will clear the current song list
   function rebuildSongUI() {
     songListContainer.innerHTML = "";
     if (!songs.length) {
@@ -840,6 +878,7 @@ window.addEventListener('DOMContentLoaded', () => {
     updateQueueView();
   }
 
+  //This will find a playlist by its name
   function updateStats() {
     const totalSongsEl = document.getElementById('totalSongs');
     const totalPlaylistsEl = document.getElementById('totalPlaylists');
@@ -863,6 +902,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  //This will filter the songs in the current playlist based on the search query
   function filterSongs(query) {
     songListContainer.innerHTML = "";
     const q = query.toLowerCase();
@@ -877,6 +917,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   searchInput.addEventListener('input', (e) => filterSongs(e.target.value));
 
+  // This will delete a song from the database by its id
   function deleteSong(id) {
     if (!db) return;
     const tx = db.transaction("songs", "readwrite");
@@ -908,6 +949,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // This will add a new playlist to the database by the users chossen name
   function createPlaylist(name) {
     if (!name || !db) return;
     const req = db.transaction("playlists", "readwrite").objectStore("playlists").add({
@@ -921,12 +963,14 @@ window.addEventListener('DOMContentLoaded', () => {
     };
   }
 
+  //This will force a confirmation popup on the users screen to confirm if they want to delete the playlist
   function deletePlaylist(id) {
     if (!db) return;
     playlistToDelete = id;
     showModal(deleteConfirmPopup);
   }
 
+  // This will delete the playlist from the database along with all songs that belong to that playlist
   const performDelete = () => {
     if (!playlistToDelete || !db) return;
     const id = playlistToDelete;
@@ -952,6 +996,7 @@ window.addEventListener('DOMContentLoaded', () => {
     };
   };
 
+  //This will rename a playlist by its id to the new name provided by the user
   function renamePlaylist(id, newName) {
     if (!db || !newName) return;
     const store = db.transaction("playlists", "readwrite").objectStore("playlists");
@@ -991,6 +1036,7 @@ window.addEventListener('DOMContentLoaded', () => {
         await loadCurrentSongs();
       };
 
+      //This will add the rename and delete buttons to the playlist item if it's not a protected playlist
       if (!isProtectedPlaylist) {
         const actions = document.createElement('div');
         actions.className = 'playlist-actions';
@@ -1034,6 +1080,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (currentPlaylistId) playlistSelect.value = currentPlaylistId;
   }
 
+  // This will check if the default playlists exist for the user and create them if they dont
   async function ensureDefaultPlaylists() {
     const libraryExists = await findPlaylistByName('My Library');
     if (!libraryExists) {
@@ -1051,6 +1098,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  //This will load the demo songs into the demos playlist if it's empty.
   async function loadDemos() {
     const demosPlaylists = await getPlaylistsNamed(PLAYLIST_DEMOS);
     if (!demosPlaylists.length) return;

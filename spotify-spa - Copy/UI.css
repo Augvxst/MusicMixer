@@ -6,7 +6,7 @@ body {
   height: 100vh;
   overflow: hidden;
 }
-
+/* Loading screen styling */ 
 .loading-screen {
   position: fixed;
   top: 0;
@@ -22,6 +22,7 @@ body {
   animation: gradientShift 6s ease infinite;
 }
 
+/* gradient animation */ 
 @keyframes gradientShift {
   0%, 100% {
     background-position: 0% 50%;
