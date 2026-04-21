@@ -105,7 +105,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (el) el.classList.add(hiddenClass);
   };
 
-  //This wil close the popup whe the user clicks out of the content
+  // This will close the popup when the user clicks outside the content
   const closeOnBackdropClick = (overlayEl, closeFn) => {
     if (!overlayEl) return;
     onEvent(overlayEl, 'click', (e) => {
@@ -450,7 +450,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   const getSongLikeId = (song) => song.originalSongId || song.id;
 
-  // This will toggle the like status of a song byadding or removing it from the liked playlist
+  // Load saved preferences for the active profile
   function loadPreferences() {
     try {
       const raw = localStorage.getItem(`musicmixer_preferences_${activeProfile}`);
@@ -640,7 +640,7 @@ window.addEventListener('DOMContentLoaded', () => {
     await refreshProfileUI();
     showToast(`Switched to profile: ${activeProfile}`);
   }
-//This will turn a blobl into a base64 url for easier storage into IndexedDB
+// This will convert a blob into a Base64 data URL for easier storage in indexedDB
   const blobToBase64 = (blob) => new Promise((resolve, reject) => {
     if (!blob) return resolve(null);
     const reader = new FileReader();
@@ -865,7 +865,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // This will clear the current song list
+  // This will rebuild the song list UI and refresh the stats/queue.
   function rebuildSongUI() {
     songListContainer.innerHTML = "";
     if (!songs.length) {
@@ -878,7 +878,7 @@ window.addEventListener('DOMContentLoaded', () => {
     updateQueueView();
   }
 
-  //This will find a playlist by its name
+  // This will update the displayed song and playlist totals
   function updateStats() {
     const totalSongsEl = document.getElementById('totalSongs');
     const totalPlaylistsEl = document.getElementById('totalPlaylists');
@@ -1098,7 +1098,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  //This will load the demo songs into the demos playlist if it's empty.
+  //This will load the demo songs into the demos playlist if it's empty
   async function loadDemos() {
     const demosPlaylists = await getPlaylistsNamed(PLAYLIST_DEMOS);
     if (!demosPlaylists.length) return;
@@ -1120,6 +1120,7 @@ window.addEventListener('DOMContentLoaded', () => {
       { name: "Jay-Z - Ni**as in Paris", audioPath: "songs/song9.mp3", imagePath: "albums/song9.jpg" }
     ];
 
+  
     for (const d of demos) {
       try {
         const audioRes = await fetch(d.audioPath);
@@ -1141,18 +1142,21 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  //This will count the number of rows in a store
   const countRows = (storeName) => new Promise((resolve) => {
     const req = db.transaction(storeName, "readonly").objectStore(storeName).count();
     req.onsuccess = () => resolve(req.result || 0);
     req.onerror = () => resolve(0);
   });
 
+  // This will add a new row to a store and return the new id
   const addRow = (storeName, obj) => new Promise((resolve) => {
     const req = db.transaction(storeName, "readwrite").objectStore(storeName).add(obj);
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => resolve(null);
   });
 
+  // This will get all playlists with a name that matches the users given name
   const findPlaylistByName = (name) => new Promise((resolve) => {
     const req = db.transaction("playlists", "readonly").objectStore("playlists").openCursor();
     req.onsuccess = (e) => {
@@ -1164,6 +1168,7 @@ window.addEventListener('DOMContentLoaded', () => {
     req.onerror = () => resolve(null);
   });
 
+  //This will count the number of songs in a playlist by its id
   const countPlaylistSongs = (playlistId) => new Promise((resolve) => {
     let count = 0;
     const req = db.transaction("songs", "readonly").objectStore("songs").index("playlist_idx").openCursor(IDBKeyRange.only(playlistId));
@@ -1181,6 +1186,7 @@ window.addEventListener('DOMContentLoaded', () => {
     req.onerror = () => resolve(count);
   });
 
+  // This will get all songs from the database that belong to the user playlists and return them as a array
   const getAllSongs = () => new Promise((resolve) => {
     const allSongs = [];
     const playlistIds = new Set(playlists.map((playlist) => playlist.id));
@@ -1199,6 +1205,7 @@ window.addEventListener('DOMContentLoaded', () => {
     req.onerror = () => resolve(allSongs);
   });
 
+  //This will make a summary of how many times each song has been played
   const makeStatsSummary = async () => {
     const allSongs = await getAllSongs();
     const playCounts = allSongs.map((song) => ({
@@ -1208,6 +1215,7 @@ window.addEventListener('DOMContentLoaded', () => {
       plays: Math.max(0, Number(playCount[song.id] || 0))
     }));
 
+    //This will find the top 5 most played songs
     const totalPlays = playCounts.reduce((sum, song) => sum + song.plays, 0);
     const mostPlayed = [...playCounts]
       .sort((a, b) => b.plays - a.plays)
@@ -1231,11 +1239,13 @@ window.addEventListener('DOMContentLoaded', () => {
     };
   };
 
+  // Parse raw json data into usable stats entries
   const parseStats = (rawData) => {
     if (!rawData || typeof rawData !== 'object' || Array.isArray(rawData)) {
       throw new Error('Invalid JSON structure.');
     }
 
+    //This will check if the json file has playcounts or most played data
     const sourceList = Array.isArray(rawData.playCounts)
       ? rawData.playCounts
       : (Array.isArray(rawData.mostPlayed) ? rawData.mostPlayed : []);
@@ -1244,6 +1254,7 @@ window.addEventListener('DOMContentLoaded', () => {
       throw new Error('No playable stats entries found.');
     }
 
+    //This will go through playercounts and most played data and make into a normalised format
     const normalised = sourceList
       .map((entry) => {
         if (!entry || typeof entry !== 'object') return null;
@@ -1266,6 +1277,7 @@ window.addEventListener('DOMContentLoaded', () => {
     return normalised;
   };
 
+  //This will apply the stats data to the users library
   const applyStats = async (entries) => {
     const allSongs = await getAllSongs();
     const songsById = new Map(allSongs.map((song) => [song.id, song]));
@@ -1294,6 +1306,7 @@ window.addEventListener('DOMContentLoaded', () => {
       }
     });
 
+    //Throws an error if no songs were matched
     if (!matched) {
       throw new Error('Imported file did not match any songs in your library.');
     }
@@ -1303,6 +1316,7 @@ window.addEventListener('DOMContentLoaded', () => {
     return matched;
   };
 
+  //This will count the matches between the stats entries and the users library
   const countMatches = async (entries) => {
     const allSongs = await getAllSongs();
     const ids = new Set(allSongs.map((song) => song.id));
@@ -1322,6 +1336,7 @@ window.addEventListener('DOMContentLoaded', () => {
     return matches;
   };
 
+  //This displays the stats summary
   const showStatsSummary = (snapshot) => {
     statsContent.innerHTML = `
       <div><strong>Total Songs:</strong> ${snapshot.totals.songs}</div>
@@ -1337,6 +1352,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  //This will export the stats as a json file 
   const exportStats = async () => {
     const snapshot = await makeStatsSummary();
     const exportData = {
@@ -1356,6 +1372,7 @@ window.addEventListener('DOMContentLoaded', () => {
     URL.revokeObjectURL(url);
   };
 
+  //This will get all rows and return them as an array
   const getAllRows = (storeName) => new Promise((resolve) => {
     const rows = [];
     const req = db.transaction(storeName, 'readonly').objectStore(storeName).openCursor();
@@ -1370,12 +1387,13 @@ window.addEventListener('DOMContentLoaded', () => {
     };
     req.onerror = () => resolve(rows);
   });
-
+ // gets the playlists with the same name for the active profile and returns them as an array
   const getPlaylistsNamed = async (name, profileName = activeProfile) => {
     const rows = await getAllRows('playlists');
     return rows.filter((row) => row.name === name && isRowForProfile(row, profileName));
   };
 
+  // This will move songs from a set of playlist ids to a new playlist id
   const moveSongsToPlaylist = (fromPlaylistIds, toPlaylistId) => new Promise((resolve) => {
     if (!db || !fromPlaylistIds.size) return resolve(true);
     const tx = db.transaction('songs', 'readwrite');
@@ -1394,6 +1412,7 @@ window.addEventListener('DOMContentLoaded', () => {
     tx.onerror = () => resolve(false);
   });
 
+  // This will delete playlists by a set of playlist ids
   const deletePlaylistsById = (playlistIds) => new Promise((resolve) => {
     if (!db || !playlistIds.size) return resolve(true);
     const tx = db.transaction('playlists', 'readwrite');
@@ -1412,11 +1431,11 @@ window.addEventListener('DOMContentLoaded', () => {
     tx.onerror = () => resolve(false);
   });
 
+  //This will merge the duplicate default playlists that have the name/conent and delete the duplicates
   const mergeDuplicates = async (profileName = activeProfile) => {
     for (const playlistName of ["My Library", PLAYLIST_DEMOS, PLAYLIST_LIKED]) {
       const matches = (await getPlaylistsNamed(playlistName, profileName)).sort((a, b) => a.id - b.id);
       if (matches.length < 2) continue;
-
       const keptPlaylist = matches[0];
       const duplicateIds = new Set(matches.slice(1).map((row) => row.id));
       await moveSongsToPlaylist(duplicateIds, keptPlaylist.id);
@@ -1424,13 +1443,14 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  //This will refresh the users library by reloading the playlists and songs
   const refreshLibrary = async ({ focusPlaylistId = null } = {}) => {
     await loadPlaylists();
     await refreshLiked();
-
     const hasFocusPlaylist = focusPlaylistId !== null && playlists.some((playlist) => playlist.id === focusPlaylistId);
     const hasCurrentPlaylist = currentPlaylistId !== null && playlists.some((playlist) => playlist.id === currentPlaylistId);
-
+  
+    //This sets the current playlist to the focused playlist
     if (hasFocusPlaylist) {
       currentPlaylistId = focusPlaylistId;
     } else if (!hasCurrentPlaylist) {
@@ -1442,6 +1462,7 @@ window.addEventListener('DOMContentLoaded', () => {
     populatePlaylistSelect();
   };
 
+  // This will clear all rows in the chosen object store
   const clearStore = (storeName) => new Promise((resolve) => {
     const tx = db.transaction(storeName, 'readwrite');
     tx.objectStore(storeName).clear();
@@ -1449,6 +1470,7 @@ window.addEventListener('DOMContentLoaded', () => {
     tx.onerror = () => resolve(false);
   });
 
+  //This will build a backup for a users profile by getting all the playlists and songs and putting them into a object
   const buildBackup = async (profileName) => {
     const playlistsRows = (await getAllRows('playlists')).filter((row) => isRowForProfile(row, profileName));
     const playlistIds = new Set(playlistsRows.map((row) => row.id));
@@ -1471,6 +1493,7 @@ window.addEventListener('DOMContentLoaded', () => {
     };
   };
 
+  //This will trigger a download of a json file with the users data
   const downloadFile = (dataObj, fileName) => {
     const backupJson = JSON.stringify(dataObj, null, 2);
     const blob = new Blob([backupJson], { type: 'application/json' });
@@ -1489,6 +1512,7 @@ window.addEventListener('DOMContentLoaded', () => {
     return true;
   };
 
+  //This will export the users profile data as a json file
   const exportBackup = async (profileName = activeProfile) => {
     const payload = await buildBackup(profileName);
     const backup = {
@@ -1501,6 +1525,7 @@ window.addEventListener('DOMContentLoaded', () => {
     return saveFile(backup, `musicmixer-backup-${profileName}-${timestamp}.json`);
   };
 
+  //This code would have exported all the data across multiple profiles, however i could not get it to work
   const exportAllBackups = async () => {
     const users = await getAllUsers();
     const profiles = [];
@@ -1508,6 +1533,7 @@ window.addEventListener('DOMContentLoaded', () => {
       profiles.push(await buildBackup(username));
     }
 
+  
     const backup = {
       app: 'MusicMixer',
       schemaVersion: 2,
@@ -1520,6 +1546,7 @@ window.addEventListener('DOMContentLoaded', () => {
     return saveFile(backup, `musicmixer-backup-all-accounts-${timestamp}.json`);
   };
 
+  //This will clear the songs and playlists for a users profile
   const clearProfileSongs = async (profileName, options = {}) => {
     const { preserveDemoPlaylist = false } = options;
     const profilePlaylists = (await getAllRows('playlists')).filter((row) => isRowForProfile(row, profileName));
@@ -1534,6 +1561,7 @@ window.addEventListener('DOMContentLoaded', () => {
       });
     }
 
+    //this will get rid off all the songs and playlists that belong to the user except the demos
     await new Promise((resolve) => {
       const tx = db.transaction('songs', 'readwrite');
       const req = tx.objectStore('songs').openCursor();
@@ -1575,12 +1603,14 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   };
 
+  // Apply backup data to a user's profile by writing playlists and songs to the database
   const applyProfileBackupPayload = async (payload, targetProfile) => {
     if (!payload || typeof payload !== 'object') throw new Error('Invalid backup payload.');
     if (!Array.isArray(payload.playlists) || !Array.isArray(payload.songs)) {
       throw new Error('Backup payload is missing playlists or songs.');
     }
 
+//This will clear the users library except the demo playlist
     await clearProfileSongs(targetProfile, { preserveDemoPlaylist: true });
 
     const playlistMap = new Map();
@@ -1603,6 +1633,7 @@ window.addEventListener('DOMContentLoaded', () => {
       songIdMap.set(String(song.id), createdSongId);
     }
 
+    //This will apply the preferences and playcount data from the backup to the users profile
     const nextPreferences = payload.preferences && typeof payload.preferences === 'object'
       ? {
         theme: 'dark',
@@ -1634,6 +1665,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   };
 
+  // Parse a backup JSON string and apply it to the target profile
   const importFullBackupFromJson = async (rawText, targetProfile = activeProfile) => {
     const parsed = JSON.parse(rawText);
     if (!parsed || typeof parsed !== 'object') throw new Error('Invalid backup file.');
@@ -1652,6 +1684,7 @@ window.addEventListener('DOMContentLoaded', () => {
     await refreshLibrary();
   };
 
+  //This imports data to all the profiles in the backup file (only 1 because multiple profile support was not done)
   const importAllBackupsFromJson = async (rawText) => {
     const parsed = JSON.parse(rawText);
     if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.profiles)) {
@@ -1682,6 +1715,7 @@ window.addEventListener('DOMContentLoaded', () => {
     return importedCount;
   };
 
+  //This resets the users library and preferences to default, preserving the demo playlist
   const resetCurrentData = async () => {
     await clearProfileSongs(activeProfile, { preserveDemoPlaylist: true });
 
@@ -1701,6 +1735,7 @@ window.addEventListener('DOMContentLoaded', () => {
     await refreshLibrary();
   };
 
+  //This will add a click event to the add song button in the upload area 
   addSongBtn.addEventListener('click', () => {
     const nameInput = document.getElementById('songNameInput');
     const fileInput = document.getElementById('songFileInput');
@@ -1727,6 +1762,7 @@ window.addEventListener('DOMContentLoaded', () => {
     if (currentIndex > 0) playSong(currentIndex - 1);
   });
 
+  //this will play the next the song in a playlsit when the next button is clicked or if auto play is on
   const playNext = () => {
     if (!songs.length) return;
     if (currentIndex < songs.length - 1) {
@@ -1771,6 +1807,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  //this formats the time in seconds to a string in the format of minutes and seconds
   const formatTime = (seconds) => {
     if (!seconds || isNaN(seconds)) return '0:00';
     const mins = Math.floor(seconds / 60);
@@ -1803,6 +1840,7 @@ window.addEventListener('DOMContentLoaded', () => {
   onEvent(closePreferencesBtn, 'click', () => hideModal(preferencesPopup));
   closeOnBackdropClick(preferencesPopup, () => hideModal(preferencesPopup));
 
+  //This will change the theme of the webpage when the user selects light/dark mode
   if (themeSelect) {
     themeSelect.addEventListener('change', () => {
       preferences.theme = themeSelect.value === 'light' ? 'light' : 'dark';
@@ -1812,6 +1850,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  //This will toggle the auto play 
   if (autoplayToggle) {
     autoplayToggle.addEventListener('change', () => {
       preferences.autoPlayNext = autoplayToggle.checked;
@@ -1819,6 +1858,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  //This toggles the confirm delete button 
   if (confirmDeleteToggle) {
     confirmDeleteToggle.addEventListener('change', () => {
       preferences.confirmDelete = confirmDeleteToggle.checked;
@@ -1859,6 +1899,7 @@ window.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
+      //This will ask the admin account where they want to import the data (not in use)
       const mode = (prompt('Import backup for:\n1) Current account\n2) Specific account\n3) All accounts', '1') || '').trim();
       if (!mode) return;
 
@@ -1897,6 +1938,7 @@ window.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
+      //This will import the backup data to the target profile
       await importFullBackupFromJson(rawText, targetProfile);
       showToast('Backup imported');
     } catch (err) {
@@ -1906,6 +1948,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  //this will reset the users library and preferences to default, Only effects the active account 
   onEvent(resetDataBtn, 'click', async () => {
     const approved = await askConfirm({
       title: 'Reset Account Data',
@@ -1924,6 +1967,7 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     await switchActiveProfile(profileSelect.value);
   });
+
 
   onEvent(profileSelect, 'change', () => {
     updateProfileButtons();
@@ -1949,6 +1993,7 @@ window.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    //This will prevent the admin account from being deleted
     if (selectedProfile.toLowerCase() === ADMIN_ACCOUNT_NAME) {
       showToast('Admin account cannot be deleted');
       return;
@@ -1961,6 +2006,7 @@ window.addEventListener('DOMContentLoaded', () => {
     });
     if (!approved) return;
 
+    //This code will delete the selected account and remove its local settings
     const wasDeleted = await deleteUserAccount(selectedProfile);
     if (!wasDeleted) {
       showToast('Failed to delete account');
@@ -1978,12 +2024,14 @@ window.addEventListener('DOMContentLoaded', () => {
     showToast(`Deleted account: ${selectedProfile}`);
   });
 
+  // This will change the selected account password when requested by an admin session
   onEvent(changePasswordBtn, 'click', async () => {
     if (!isMasterSession) {
       showToast('Only admin can change account passwords');
       return;
     }
 
+    // this will get the selected profile
     const selectedProfile = (profileSelect.value || '').trim();
     if (!selectedProfile) {
       showToast('Select an account first');
@@ -2016,6 +2064,7 @@ window.addEventListener('DOMContentLoaded', () => {
 
   syncPreferenceUI();
 
+  //This will show the new playlist popup when the user clicks the create new playlist button
   onEvent(newPlaylistBtn, 'click', () => {
     newPlaylistInput.value = '';
     showModal(newPlaylistPopup);
@@ -2030,16 +2079,19 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  //This will hide the new playlist popup when the user clicks the cancel button or clicks outside the popup
   onEvent(cancelNewPlaylistBtn, 'click', () => hideModal(newPlaylistPopup));
   onEvent(closeNewPlaylistBtn, 'click', () => hideModal(newPlaylistPopup));
   closeOnBackdropClick(newPlaylistPopup, () => hideModal(newPlaylistPopup));
 
+  //This will allow the user to press enter to create a new playlist instead of clicking the button
   newPlaylistInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       createPlaylistBtn.click();
     }
   });
+
 
   saveRenamePlaylistBtn.addEventListener('click', () => {
     const newName = renamePlaylistInput.value.trim();
@@ -2100,6 +2152,7 @@ window.addEventListener('DOMContentLoaded', () => {
     confirmImportBtn.addEventListener('click', () => closeConfirmDialog(true));
   }
 
+  // Pressing escape closes popups/confirmations, and enter confirms playlist deletion.
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       if (importConfirmPopup && !importConfirmPopup.classList.contains(hiddenClass)) {
