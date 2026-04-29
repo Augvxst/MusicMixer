@@ -22,16 +22,16 @@ Offering industry standard features with no ads or subscriptions
 
 ## Getting Started
 
-**Option 1 — Open directly**
+**Option 1 — Clone**
 
 ```bash
-git clone https://github.com/your-username/musicmixer.git
+git clone https://github.com/Augvxst/musicmixer.git
 cd musicmixer
 ```
 
 Then open `index.html` in your browser.
 
-**Option 2 — Live Server (recommended)**
+**Option 2 — Live Server**
 
 1. Open the project folder in VS Code
 2. Install the [Live Server](https://marketplace.visualstudio.com/items?itemName=ritwickdey.LiveServer) extension
@@ -41,11 +41,11 @@ Then open `index.html` in your browser.
 
 ## Tech Stack
 
-- **HTML5** — structure and audio elements
-- **CSS3** — styling and layout
-- **JavaScript (ES6+)** — application logic
-- **IndexedDB** — in-browser persistent storage
-- **JSON** — export and import for backups
+- **HTML5** 
+- **CSS3** 
+- **JavaScript**
+- **IndexedDB** 
+- **JSON** 
 
 ---
 
