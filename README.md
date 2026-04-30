@@ -12,10 +12,10 @@ Offering industry standard features with no ads or subscriptions
 
 ## Features
 
-- Offline playback — all audio stored locally via IndexedDB
+- Offline playback all audio stored locally via IndexedDB
 - User accounts with playlists, stats and preferences
 - Audio upload supporting all audio types
-- Playlist management — create, rename and delete playlists
+- Playlist management create, rename and delete playlists
 - JSON export and import for backups
 
 ---
